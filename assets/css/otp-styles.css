@@ -1,0 +1,5 @@
+/* WP OTP Plugin Styles */
+#wp-otp-form,
+#wp-otp-verify-form {
+  margin: 20px 0;
+}
