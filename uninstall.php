@@ -4,7 +4,11 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-// Clean up options
+// Remove plugin options
 delete_option('wp_otp_settings');
 
-// Drop custom tables if needed
+// Drop custom OTP table
+global $wpdb;
+$table_name = $wpdb->prefix . 'otp_codes';
+
+$wpdb->query("DROP TABLE IF EXISTS $table_name");
