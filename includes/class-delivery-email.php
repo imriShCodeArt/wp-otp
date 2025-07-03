@@ -1,5 +1,7 @@
 <?php
 
+namespace WpOtp;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -32,7 +34,7 @@ class WP_OTP_Delivery_Email
 
         $this->message_template = get_option(
             'wp_otp_email_message',
-            __('Your OTP code is {OTP}. It will expire in {minutes} minutes.', 'wp-otp')
+            __('Your OTP code is {OTP}. It will expire in {MINUTES} minutes.', 'wp-otp')
         );
     }
 
@@ -46,24 +48,40 @@ class WP_OTP_Delivery_Email
      */
     public function send($email, $otp, $expiry_minutes)
     {
+        if (!is_email($email)) {
+            return false;
+        }
+
         $subject = str_replace(
             '{OTP}',
-            $otp,
+            esc_html($otp),
             $this->subject_template
         );
 
         $message = str_replace(
-            ['{OTP}', '{minutes}'],
-            [$otp, $expiry_minutes],
+            ['{OTP}', '{MINUTES}'],
+            [esc_html($otp), esc_html($expiry_minutes)],
             $this->message_template
         );
 
         /**
-         * Filter email subject and message before sending.
+         * Filter email subject, message, and headers before sending.
          */
         $subject = apply_filters('wp_otp_email_subject', $subject, $email, $otp);
         $message = apply_filters('wp_otp_email_message', $message, $email, $otp, $expiry_minutes);
+        $headers = apply_filters('wp_otp_email_headers', []);
 
-        return wp_mail($email, $subject, $message);
+        $sent = wp_mail($email, $subject, $message, $headers);
+
+        if (!$sent) {
+            error_log("WP OTP: wp_mail failed to send to $email");
+        }
+
+        /**
+         * Action after email send attempt.
+         */
+        do_action('wp_otp_email_sent', $sent, $email, $otp);
+
+        return $sent;
     }
 }

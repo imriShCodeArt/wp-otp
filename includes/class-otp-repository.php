@@ -1,5 +1,7 @@
 <?php
 
+namespace WpOtp;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -26,39 +28,24 @@ class WP_OTP_Repository
      * @param string $contact
      * @param string $hash
      * @param string $expires_at
-     * @return void
+     * @return int|false Row ID or false on failure.
      */
     public function save_otp($contact, $hash, $expires_at)
     {
-        global $wpdb;
-
         $existing = $this->get_otp_record($contact);
 
         if ($existing) {
-            $wpdb->update(
-                $this->table_name,
-                [
-                    'code_hash' => $hash,
-                    'expires_at' => $expires_at,
-                    'attempts' => 0,
-                    'status' => 'pending',
-                ],
-                ['contact' => $contact],
-                ['%s', '%s', '%d', '%s'],
-                ['%s']
-            );
+            $updated = wp_otp_update_code($contact, [
+                'code_hash' => $hash,
+                'expires_at' => $expires_at,
+                'attempts' => 0,
+                'status' => 'pending',
+            ]);
+
+            return $updated !== false ? $existing->id : false;
+
         } else {
-            $wpdb->insert(
-                $this->table_name,
-                [
-                    'contact' => $contact,
-                    'code_hash' => $hash,
-                    'expires_at' => $expires_at,
-                    'attempts' => 0,
-                    'status' => 'pending',
-                ],
-                ['%s', '%s', '%s', '%d', '%s']
-            );
+            return wp_otp_insert_code($contact, $hash, $expires_at);
         }
     }
 
@@ -70,47 +57,50 @@ class WP_OTP_Repository
      */
     public function get_otp_record($contact)
     {
-        global $wpdb;
-
-        return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $this->table_name WHERE contact = %s",
-            $contact
-        ));
+        return wp_otp_get_code($contact);
     }
 
     /**
-     * Update OTP status.
+     * Update OTP status for a contact.
      *
      * @param string $contact
      * @param string $status
-     * @return void
+     * @return int|false Rows updated or false.
      */
     public function update_status($contact, $status)
     {
-        global $wpdb;
-
-        $wpdb->update(
-            $this->table_name,
-            ['status' => $status],
-            ['contact' => $contact],
-            ['%s'],
-            ['%s']
-        );
+        return wp_otp_update_code($contact, [
+            'status' => $status
+        ]);
     }
 
     /**
      * Increment attempts counter.
      *
      * @param string $contact
-     * @return void
+     * @return int|false Rows updated or false.
      */
     public function increment_attempts($contact)
     {
-        global $wpdb;
+        $record = $this->get_otp_record($contact);
+        if (!$record) {
+            return false;
+        }
 
-        $wpdb->query($wpdb->prepare(
-            "UPDATE $this->table_name SET attempts = attempts + 1 WHERE contact = %s",
-            $contact
-        ));
+        $new_attempts = (int) $record->attempts + 1;
+
+        return wp_otp_update_code($contact, [
+            'attempts' => $new_attempts
+        ]);
+    }
+
+    /**
+     * Delete expired OTPs.
+     *
+     * @return int Number of rows deleted.
+     */
+    public function cleanup_expired()
+    {
+        return wp_otp_cleanup_expired_codes();
     }
 }

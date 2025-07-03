@@ -1,5 +1,7 @@
 <?php
 
+namespace WpOtp;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -17,17 +19,12 @@ class WP_OTP_CodeGenerator
      *
      * @param int $length
      * @return string
+     * @throws \Exception
      */
     public function generate($length = 6)
     {
         $digits = '0123456789';
-        $otp = '';
-
-        for ($i = 0; $i < $length; $i++) {
-            $otp .= $digits[rand(0, strlen($digits) - 1)];
-        }
-
-        return $otp;
+        return $this->generate_from_charset($digits, $length);
     }
 
     /**
@@ -35,14 +32,29 @@ class WP_OTP_CodeGenerator
      *
      * @param int $length
      * @return string
+     * @throws \Exception
      */
     public function generate_alphanumeric($length = 6)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        return $this->generate_from_charset($characters, $length);
+    }
+
+    /**
+     * Generate a random OTP from any character set.
+     *
+     * @param string $charset
+     * @param int $length
+     * @return string
+     * @throws \Exception
+     */
+    protected function generate_from_charset($charset, $length)
+    {
         $otp = '';
+        $max_index = strlen($charset) - 1;
 
         for ($i = 0; $i < $length; $i++) {
-            $otp .= $characters[rand(0, strlen($characters) - 1)];
+            $otp .= $charset[random_int(0, $max_index)];
         }
 
         return $otp;

@@ -76,13 +76,17 @@ class ComposerStaticInita1b04971e16a4f5c4c52d5cfd271167d
         'PHPCSUtils\\Utils\\TypeString' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/TypeString.php',
         'PHPCSUtils\\Utils\\UseStatements' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/UseStatements.php',
         'PHPCSUtils\\Utils\\Variables' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/Variables.php',
-        'WP_OTP_Admin_Ajax' => __DIR__ . '/../..' . '/admin/class-admin-ajax.php',
-        'WP_OTP_Admin_Page' => __DIR__ . '/../..' . '/admin/class-admin-page.php',
-        'WP_OTP_Auth_Overrides' => __DIR__ . '/../..' . '/includes/class-auth-overrides.php',
-        'WP_OTP_Logger' => __DIR__ . '/../..' . '/includes/class-logger.php',
-        'WP_OTP_Rate_Limiter' => __DIR__ . '/../..' . '/includes/class-rate-limiter.php',
-        'WP_OTP_SMS_019_Client' => __DIR__ . '/../..' . '/includes/class-sms-019-client.php',
+        'WpOtp\\WP_OTP_Admin_Ajax' => __DIR__ . '/../..' . '/admin/class-admin-ajax.php',
+        'WpOtp\\WP_OTP_Admin_Page' => __DIR__ . '/../..' . '/admin/class-admin-page.php',
+        'WpOtp\\WP_OTP_Auth_Overrides' => __DIR__ . '/../..' . '/includes/class-auth-overrides.php',
+        'WpOtp\\WP_OTP_CodeGenerator' => __DIR__ . '/../..' . '/includes/class-otp-codegenerator.php',
+        'WpOtp\\WP_OTP_Delivery_Email' => __DIR__ . '/../..' . '/includes/class-delivery-email.php',
+        'WpOtp\\WP_OTP_Logger' => __DIR__ . '/../..' . '/includes/class-logger.php',
         'WpOtp\\WP_OTP_Manager' => __DIR__ . '/../..' . '/includes/class-otp-manager.php',
+        'WpOtp\\WP_OTP_Rate_Limiter' => __DIR__ . '/../..' . '/includes/class-rate-limiter.php',
+        'WpOtp\\WP_OTP_Repository' => __DIR__ . '/../..' . '/includes/class-otp-repository.php',
+        'WpOtp\\WP_OTP_SMS_019_Client' => __DIR__ . '/../..' . '/includes/class-sms-019-client.php',
+        'WpOtp\\WP_OTP_Shortcodes' => __DIR__ . '/../..' . '/includes/class-shortcodes.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

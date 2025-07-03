@@ -1,5 +1,7 @@
 <?php
 
+namespace WpOtp;
+
 if (!defined('ABSPATH')) {
     exit;
 }
