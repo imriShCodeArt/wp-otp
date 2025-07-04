@@ -57,7 +57,7 @@ class WP_OTP_Shortcodes
 
         ob_start();
 
-        $template_path = WP_OTP_PATH . 'templates/shortcode-request-form.php';
+        $template_path = WP_OTP_PATH . 'templates/shortcode-request-form/index.php';
         if (file_exists($template_path)) {
             include $template_path;
         }
