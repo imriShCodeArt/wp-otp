@@ -1,0 +1,10 @@
+.wp-otp-btn {
+  transition: all 0.3s ease;
+}
+
+.wp-otp-btn:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  border-color: #b3b3b3;
+  transform: translateY(-2px);
+  color: #333;
+}

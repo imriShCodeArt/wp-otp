@@ -16,6 +16,21 @@ class WP_OTP_Shortcodes
 
     public function enqueue_scripts()
     {
+        wp_enqueue_style(
+            'wp-otp-bootstrap',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
+            [],
+            '5.3.3'
+        );
+
+        wp_enqueue_style(
+            'wp-otp-frontend-style',
+            WP_OTP_URL . 'assets/css/wp-otp-frontend.css',
+            [],
+            WP_OTP_VERSION
+        );
+
+
         wp_enqueue_script(
             'wp-otp-frontend',
             WP_OTP_URL . 'assets/js/wp-otp-frontend.js',
@@ -44,11 +59,9 @@ class WP_OTP_Shortcodes
 
         $template_path = WP_OTP_PATH . 'templates/shortcode-request-form.php';
         if (file_exists($template_path)) {
-            /** @noinspection PhpIncludeInspection */
             include $template_path;
         }
 
         return ob_get_clean();
     }
-
 }
