@@ -1,0 +1,187 @@
+# Copyright (C) 2025 Your Name
+# This file is distributed under the same license as the WP OTP plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP OTP 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-otp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-07-04T10:08:10+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: wp-otp\n"
+
+#. Plugin Name of the plugin
+#: wp-otp.php
+#: admin/class-admin-page.php:31
+msgid "WP OTP"
+msgstr ""
+
+#. Description of the plugin
+#: wp-otp.php
+msgid "Send and verify One-Time Passwords via email or 019 SMS for WordPress users."
+msgstr ""
+
+#. Author of the plugin
+#: wp-otp.php
+msgid "Your Name"
+msgstr ""
+
+#: admin/class-admin-ajax.php:55
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: admin/class-admin-ajax.php:61
+msgid "Invalid request data."
+msgstr ""
+
+#: admin/class-admin-ajax.php:74
+msgid "Settings saved successfully."
+msgstr ""
+
+#: admin/class-admin-page.php:30
+#: admin/class-admin-page.php:211
+#: admin/views/settings-page.php:11
+msgid "WP OTP Settings"
+msgstr ""
+
+#: admin/class-admin-page.php:48
+msgid "OTP Channels"
+msgstr ""
+
+#: admin/class-admin-page.php:56
+msgid "OTP Cooldown (seconds)"
+msgstr ""
+
+#: admin/class-admin-page.php:86
+msgid "OTP Settings"
+msgstr ""
+
+#: admin/class-admin-page.php:93
+msgid "OTP Length"
+msgstr ""
+
+#: admin/class-admin-page.php:101
+msgid "OTP Expiry (minutes)"
+msgstr ""
+
+#: admin/class-admin-page.php:109
+msgid "Email Subject"
+msgstr ""
+
+#: admin/class-admin-page.php:117
+msgid "Email Body"
+msgstr ""
+
+#: admin/class-admin-page.php:125
+msgid "SMS Sender Name"
+msgstr ""
+
+#: admin/class-admin-page.php:133
+msgid "SMS Message Template"
+msgstr ""
+
+#: admin/class-admin-page.php:141
+msgid "Enable Phone-only Authentication"
+msgstr ""
+
+#: admin/class-admin-page.php:230
+msgid "Length of the OTP code (4-10 digits)."
+msgstr ""
+
+#: admin/class-admin-page.php:243
+msgid "How long the OTP is valid, in minutes."
+msgstr ""
+
+#: admin/class-admin-page.php:255
+#: includes/class-delivery-email.php:32
+msgid "Your OTP Code"
+msgstr ""
+
+#: admin/class-admin-page.php:258
+msgid "Subject line for OTP email."
+msgstr ""
+
+#: admin/class-admin-page.php:273
+msgid "Your OTP code is: {OTP}. It will expire in {MINUTES} minutes."
+msgstr ""
+
+#: admin/class-admin-page.php:279
+msgid "Body text for OTP email. Use placeholders like {OTP} and {MINUTES}."
+msgstr ""
+
+#: admin/class-admin-page.php:298
+msgid "Sender name for SMS messages (must be registered with 019)."
+msgstr ""
+
+#: admin/class-admin-page.php:312
+#: includes/class-delivery-email.php:37
+msgid "Your OTP code is {OTP}. It will expire in {MINUTES} minutes."
+msgstr ""
+
+#: admin/class-admin-page.php:316
+msgid "SMS text template. Use placeholders like {OTP} and {MINUTES}."
+msgstr ""
+
+#: admin/class-admin-page.php:334
+msgid "Enable phone-only login/registration (no username or password)."
+msgstr ""
+
+#: admin/class-admin-page.php:347
+msgid "Email"
+msgstr ""
+
+#: admin/class-admin-page.php:350
+msgid "SMS"
+msgstr ""
+
+#: admin/class-admin-page.php:359
+msgid "Seconds before allowing resend."
+msgstr ""
+
+#: admin/views/logs-page.php:11
+msgid "WP OTP Logs"
+msgstr ""
+
+#: admin/views/logs-page.php:12
+msgid "This page will display logs of OTP sends and verifications."
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-channel-selector.php:4
+msgid "Choose OTP Channel:"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:8
+msgid "Phone Number:"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:9
+msgid "Email Address:"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:12
+msgid "Email or Phone:"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:20
+msgid "Send OTP"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-verification-section.php:4
+msgid "Enter OTP:"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-verification-section.php:11
+msgid "Verify OTP"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-verification-section.php:14
+msgid "Change Email/Phone"
+msgstr ""
+
+#: templates/shortcode-request-form/wp-otp-verification-section.php:17
+msgid "Resend OTP"
+msgstr ""

@@ -1,0 +1,2 @@
+<?php
+return ['project-id-version'=>'wp-otp 1.0','pot-creation-date'=>'2025-07-04 12:00+0300','po-revision-date'=>'2025-07-04 10:08+0000','last-translator'=>'YOUR NAME <you@example.com>','language-team'=>'English (United States)','language'=>'en_US','mime-version'=>'1.0','content-type'=>'text/plain; charset=UTF-8','content-transfer-encoding'=>'8bit','plural-forms'=>'nplurals=2; plural=n != 1;','x-generator'=>'Loco https://localise.biz/','messages'=>[]];
