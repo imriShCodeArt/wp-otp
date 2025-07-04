@@ -2,7 +2,82 @@ jQuery(function ($) {
   let cooldownSeconds = parseInt(wpOtpFrontend.cooldown);
   let isCooldown = false;
 
-  $("#wp-otp-request-form").on("submit", function (e) {
+  const selectors = {
+    form: $("#wp-otp-request-form"),
+    initialSection: $("#wp-otp-initial-section"),
+    verificationSection: $("#wp-otp-verification-section"),
+    channelSection: $("#wp-otp-channel-section"),
+    resendBtn: $("#wp-otp-resend-btn"),
+    cooldownTimer: $("#wp-otp-cooldown-timer"),
+    changeContactBtn: $("#wp-otp-change-contact-btn"),
+    otpInput: $("#wp_otp_input"),
+    contactInput: $("#otp_contact"),
+    nonceInput: $('input[name="nonce"]'),
+    otpChannelInputs: $('input[name="otp_channel"]'),
+    otpContactLabel: $("#otp_contact_label"),
+  };
+
+  function getSelectedChannel() {
+    return (
+      selectors.otpChannelInputs.filter(":checked").val() ||
+      selectors.otpChannelInputs.val()
+    );
+  }
+
+  function toggleSections({
+    initial = false,
+    verification = false,
+    channel = false,
+  }) {
+    selectors.initialSection.toggle(initial);
+    selectors.verificationSection.toggle(verification);
+    selectors.channelSection.toggle(channel);
+  }
+
+  function ajaxRequest({ action, data, onSuccess, onError }) {
+    $.ajax({
+      url: wpOtpFrontend.ajaxUrl,
+      method: "POST",
+      dataType: "json",
+      data: {
+        action,
+        nonce: selectors.nonceInput.val(),
+        ...data,
+      },
+      success: function (response) {
+        if (response.success) {
+          onSuccess(response);
+        } else {
+          alert(response.data.message);
+        }
+      },
+      error: function () {
+        alert("An error occurred.");
+        if (onError) onError();
+      },
+    });
+  }
+
+  function startCooldown() {
+    let timeLeft = cooldownSeconds;
+    isCooldown = true;
+
+    selectors.resendBtn.prop("disabled", true);
+    selectors.cooldownTimer.text(`${timeLeft}s`);
+
+    const timer = setInterval(() => {
+      timeLeft--;
+      selectors.cooldownTimer.text(`${timeLeft}s`);
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        selectors.resendBtn.prop("disabled", false);
+        selectors.cooldownTimer.text("");
+        isCooldown = false;
+      }
+    }, 1000);
+  }
+
+  function handleFormSubmit(e) {
     e.preventDefault();
 
     if (isCooldown) {
@@ -10,93 +85,57 @@ jQuery(function ($) {
       return;
     }
 
-    var channel =
-      $('input[name="otp_channel"]:checked').val() ||
-      $('input[name="otp_channel"]').val();
-    var contact = $("#otp_contact").val();
-    var nonce = $('input[name="nonce"]').val();
+    selectors.channelSection.removeClass("d-flex").hide();
 
-    $.ajax({
-      url: wpOtpFrontend.ajaxUrl,
-      method: "POST",
-      dataType: "json",
+    ajaxRequest({
+      action: "wp_otp_send_otp",
       data: {
-        action: "wp_otp_send_otp",
-        nonce: nonce,
-        channel: channel,
-        contact: contact,
+        channel: getSelectedChannel(),
+        contact: selectors.contactInput.val(),
       },
-      success: function (response) {
-        if (response.success) {
-          $("#wp-otp-initial-section").hide();
-          $("#wp-otp-verification-section").show();
-          startCooldown();
-        } else {
-          alert(response.data.message);
-        }
-      },
-      error: function () {
-        alert("Error sending OTP.");
+      onSuccess: () => {
+        toggleSections({ initial: false, verification: true });
+        startCooldown();
       },
     });
-  });
-
-  $("#wp-otp-change-contact-btn").on("click", function () {
-    $("#wp-otp-verification-section").show();
-    $("#wp-otp-initial-section").show();
-  });
-
-  $("#wp-otp-verify-btn").on("click", function () {
-    var otp = $("#wp_otp_input").val();
-    var contact = $("#otp_contact").val();
-    var nonce = $('input[name="nonce"]').val();
-    var channel =
-      $('input[name="otp_channel"]:checked').val() ||
-      $('input[name="otp_channel"]').val();
-
-    $.ajax({
-      url: wpOtpFrontend.ajaxUrl,
-      method: "POST",
-      dataType: "json",
-      data: {
-        action: "wp_otp_verify_otp",
-        nonce: nonce,
-        contact: contact,
-        otp: otp,
-        channel: channel,
-      },
-      success: function (response) {
-        alert(response.data.message);
-        if (response.success) {
-          location.reload();
-        }
-      },
-      error: function () {
-        alert("Error verifying OTP.");
-      },
-    });
-  });
-
-  $("#wp-otp-resend-btn").on("click", function () {
-    $("#wp-otp-request-form").submit();
-  });
-
-  function startCooldown() {
-    let timeLeft = cooldownSeconds;
-    isCooldown = true;
-
-    $("#wp-otp-resend-btn").prop("disabled", true);
-    $("#wp-otp-cooldown-timer").text(timeLeft + "s");
-
-    let timer = setInterval(function () {
-      timeLeft--;
-      $("#wp-otp-cooldown-timer").text(timeLeft + "s");
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        $("#wp-otp-resend-btn").prop("disabled", false);
-        $("#wp-otp-cooldown-timer").text("");
-        isCooldown = false;
-      }
-    }, 1000);
   }
+
+  function handleVerifyClick() {
+    ajaxRequest({
+      action: "wp_otp_verify_otp",
+      data: {
+        contact: selectors.contactInput.val(),
+        otp: selectors.otpInput.val(),
+        channel: getSelectedChannel(),
+      },
+      onSuccess: (response) => {
+        alert(response.data.message);
+        location.reload();
+      },
+    });
+  }
+
+  function handleChangeContact() {
+    toggleSections({ initial: true, verification: false, channel: true });
+  }
+
+  function handleResendClick() {
+    selectors.form.trigger("submit");
+  }
+
+  function handleChannelChange() {
+    const channel = getSelectedChannel()?.toLowerCase();
+    if (channel === "sms") {
+      selectors.otpContactLabel.text("Phone Number:");
+    } else {
+      selectors.otpContactLabel.text("Email Address:");
+    }
+  }
+
+  // Event Bindings
+  selectors.form.on("submit", handleFormSubmit);
+  selectors.changeContactBtn.on("click", handleChangeContact);
+  selectors.resendBtn.on("click", handleResendClick);
+  $("#wp-otp-verify-btn").on("click", handleVerifyClick);
+  selectors.otpChannelInputs.on("change", handleChannelChange);
 });
