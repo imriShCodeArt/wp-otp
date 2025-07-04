@@ -23,7 +23,7 @@ class WP_OTP_Repository
     }
 
     /**
-     * Save or update an OTP record.
+     * Save a new OTP record.
      *
      * @param string $contact
      * @param string $hash
@@ -32,21 +32,11 @@ class WP_OTP_Repository
      */
     public function save_otp($contact, $hash, $expires_at)
     {
-        $existing = $this->get_otp_record($contact);
-
-        if ($existing) {
-            $updated = wp_otp_update_code($contact, [
-                'code_hash' => $hash,
-                'expires_at' => $expires_at,
-                'attempts' => 0,
-                'status' => 'pending',
-            ]);
-
-            return $updated !== false ? $existing->id : false;
-
-        } else {
-            return wp_otp_insert_code($contact, $hash, $expires_at);
-        }
+        return wp_otp_insert_code(
+            $contact,
+            $hash,
+            $expires_at
+        );
     }
 
     /**
@@ -101,6 +91,32 @@ class WP_OTP_Repository
      */
     public function cleanup_expired()
     {
-        return wp_otp_cleanup_expired_codes();
+        global $wpdb;
+
+        return $wpdb->query(
+            "DELETE FROM {$this->table_name} WHERE expires_at < NOW()"
+        );
+    }
+
+    /**
+     * Count OTPs generated recently for resend limiting.
+     *
+     * @param string $contact
+     * @param int $window_minutes
+     * @return int
+     */
+    public function count_recent_otps($contact, $window_minutes)
+    {
+        global $wpdb;
+
+        $since = date('Y-m-d H:i:s', strtotime("-$window_minutes minutes", current_time('timestamp', 1)));
+
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$this->table_name} WHERE contact = %s AND created_at >= %s",
+                $contact,
+                $since
+            )
+        );
     }
 }

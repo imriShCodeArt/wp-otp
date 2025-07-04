@@ -16,10 +16,13 @@ function wp_otp_default_settings()
     return [
         'otp_length' => 6,
         'otp_expiry' => 5,
+        'otp_resend_limit' => 3,
+        'otp_resend_window' => 15,
         'email_subject' => 'Your OTP Code',
         'email_body' => 'Your OTP code is: {otp}',
     ];
 }
+
 
 function wp_otp_get_settings()
 {
@@ -42,12 +45,12 @@ function wp_otp_activate()
         expires_at DATETIME NOT NULL,
         attempts INT DEFAULT 0,
         status ENUM('pending','verified','expired') DEFAULT 'pending',
-        PRIMARY KEY (id),
-        UNIQUE KEY unique_contact (contact)
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
     ) $charset_collate;";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    $queries = dbDelta($sql);
+    dbDelta($sql);
 
     if (get_option('wp_otp_settings') === false) {
         update_option('wp_otp_settings', wp_otp_default_settings());
@@ -77,12 +80,14 @@ function wp_otp_insert_code($contact, $code_hash, $expires_at)
             'expires_at' => $expires_at,
             'attempts' => 0,
             'status' => 'pending',
+            'created_at' => current_time('mysql', 1),
         ],
         [
             '%s',
             '%s',
             '%s',
             '%d',
+            '%s',
             '%s',
         ]
     );
@@ -93,6 +98,7 @@ function wp_otp_insert_code($contact, $code_hash, $expires_at)
 
     return $wpdb->insert_id;
 }
+
 
 /**
  * Update OTP record for a given contact.
@@ -118,6 +124,7 @@ function wp_otp_update_code($contact, $data)
                 $format[] = '%d';
                 break;
             case 'expires_at':
+            case 'created_at':
                 $format[] = '%s';
                 break;
             case 'status':
@@ -138,8 +145,13 @@ function wp_otp_update_code($contact, $data)
         ['%s']
     );
 
-    return $result;
+    if ($result === false) {
+        return false;
+    }
+
+    return true;
 }
+
 
 /**
  * Retrieve an OTP record by contact.

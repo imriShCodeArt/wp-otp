@@ -40,6 +40,7 @@ class WP_OTP_Manager
         $this->repository = new WP_OTP_Repository();
         $this->email_delivery = new WP_OTP_Delivery_Email();
         // $this->sms_client = new WP_OTP_SMS_019_Client();
+        $this->logger = new WP_OTP_Logger();
     }
 
     /**
@@ -48,35 +49,37 @@ class WP_OTP_Manager
      * @param string $contact Email or phone number.
      * @param string $channel "email" or "sms"
      * @param int $length
-     * @param int $expiry_minutes
      * @return bool
      */
-    public function send_otp($contact, $channel = 'email', $length = 6, $expiry_minutes = 5)
+    public function send_otp($contact, $channel = 'email', $length = 6)
     {
         $options = wp_otp_get_settings();
         $allowed_channels = $options['otp_channels'] ?? [];
+        $expiry_minutes = isset($options['otp_expiry']) ? (int) $options['otp_expiry'] : 5;
+        $resend_limit = isset($options['otp_resend_limit']) ? (int) $options['otp_resend_limit'] : 3;
+        $resend_window = isset($options['otp_resend_window']) ? (int) $options['otp_resend_window'] : 15;
 
         if (!in_array($channel, $allowed_channels, true)) {
             return false;
         }
 
-        // Generate OTP
-        $otp = $this->code_generator->generate($length);
+        $recent_count = $this->repository->count_recent_otps($contact, $resend_window);
 
-        $hash = password_hash($otp, PASSWORD_DEFAULT);
-
-        // Expiration timestamp
-        $expires_at = current_time('mysql', 1);
-        $expires_at = date('Y-m-d H:i:s', strtotime("+$expiry_minutes minutes", strtotime($expires_at)));
-
-        // Save or update the OTP record
-        $saved_id = $this->repository->save_otp($contact, $hash, $expires_at);
-
-        if (!$saved_id) {
+        if ($recent_count >= $resend_limit) {
             return false;
         }
 
-        // Deliver OTP
+        $otp = $this->code_generator->generate($length);
+        $hash = password_hash($otp, PASSWORD_DEFAULT);
+        $expires_at = date('Y-m-d H:i:s', strtotime("+$expiry_minutes minutes", current_time('timestamp', 1)));
+
+        $saved_id = $this->repository->save_otp($contact, $hash, $expires_at);
+
+        if (!$saved_id) {
+            $this->logger->log('send_failed', $contact, "Could not save OTP to DB.");
+            return false;
+        }
+
         if ($channel === 'email') {
             return $this->email_delivery->send($contact, $otp, $expiry_minutes);
         }
@@ -87,7 +90,6 @@ class WP_OTP_Manager
 
         return false;
     }
-
 
     /**
      * Verify the OTP entered by the user.

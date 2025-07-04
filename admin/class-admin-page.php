@@ -50,14 +50,30 @@ class WP_OTP_Admin_Page
             'wp-otp',
             'wp_otp_main'
         );
-        
+
         add_settings_field(
             'otp_cooldown',
             __('OTP Cooldown (seconds)', 'wp-otp'),
             [$this, 'field_otp_cooldown'],
             'wp-otp',
             'wp_otp_main'
-        );        
+        );
+
+        add_settings_field(
+            'otp_resend_limit',
+            __('OTP Resend Limit'),
+            [$this, 'field_otp_resend_limit'],
+            'wp-otp',
+            'wp_otp_main'
+        );
+
+        add_settings_field(
+            'otp_resend_window',
+            __('OTP Resend Window (minutes)'),
+            [$this, 'field_otp_resend_window'],
+            'wp-otp',
+            'wp_otp_main'
+        );
 
         register_setting(
             'wp_otp_settings_group',
@@ -140,12 +156,12 @@ class WP_OTP_Admin_Page
         $output = [];
 
         $output['otp_channels'] = isset($input['otp_channels']) && is_array($input['otp_channels'])
-    ? array_map('sanitize_text_field', $input['otp_channels'])
-    : [];
+            ? array_map('sanitize_text_field', $input['otp_channels'])
+            : [];
 
-    $output['otp_cooldown'] = isset($input['otp_cooldown'])
-    ? max(10, intval($input['otp_cooldown']))
-    : 30;
+        $output['otp_cooldown'] = isset($input['otp_cooldown'])
+            ? max(10, intval($input['otp_cooldown']))
+            : 30;
 
 
         $output['otp_length'] = isset($input['otp_length'])
@@ -170,6 +186,14 @@ class WP_OTP_Admin_Page
 
         $output['sms_message'] = isset($input['sms_message'])
             ? sanitize_textarea_field($input['sms_message'])
+            : '';
+
+        $output['otp_resend_window'] = isset($input['otp_resend_window'])
+            ? sanitize_textarea_field($input['otp_resend_window'])
+            : '';
+
+        $output['otp_resend_limit'] = isset($input['otp_resend_limit'])
+            ? sanitize_textarea_field($input['otp_resend_limit'])
             : '';
 
         $output['phone_only_auth'] = isset($input['phone_only_auth']) && $input['phone_only_auth'] === '1' ? '1' : '0';
@@ -228,12 +252,15 @@ class WP_OTP_Admin_Page
     public function field_email_subject()
     {
         $options = wp_otp_get_settings();
+        $subject = $options['email_subject'] ?? __('Your OTP Code', 'wp-otp');
+        $subject = apply_filters('wpml_translate_single_string', $subject, 'WP OTP', 'Email Subject');
         ?>
         <label for="wp_otp_email_subject"><?php esc_html_e('Subject line for OTP email.', 'wp-otp'); ?></label>
         <input type="text" id="wp_otp_email_subject" name="wp_otp_settings[email_subject]"
-            value="<?php echo esc_attr($options['email_subject'] ?? __('Your OTP Code', 'wp-otp')); ?>" class="regular-text" />
+            value="<?php echo esc_attr($subject); ?>" class="regular-text" />
         <?php
     }
+
 
     /**
      * Email Body Field.
@@ -241,13 +268,21 @@ class WP_OTP_Admin_Page
     public function field_email_body()
     {
         $options = wp_otp_get_settings();
+
+        // Fallback default
+        $body = $options['email_body'] ?? __('Your OTP code is: {OTP}. It will expire in {MINUTES} minutes.', 'wp-otp');
+
+        // Apply WPML translation
+        $body = apply_filters('wpml_translate_single_string', $body, 'WP OTP', 'Email Body');
         ?>
-        <label
-            for="wp_otp_email_body"><?php esc_html_e('Body text for OTP email. Use placeholders like {OTP} and {MINUTES}.', 'wp-otp'); ?></label>
+        <label for="wp_otp_email_body">
+            <?php esc_html_e('Body text for OTP email. Use placeholders like {OTP} and {MINUTES}.', 'wp-otp'); ?>
+        </label>
         <textarea id="wp_otp_email_body" name="wp_otp_settings[email_body]" rows="5"
-            class="large-text"><?php echo esc_textarea($options['email_body'] ?? __('Your OTP code is: {OTP}. It will expire in {MINUTES} minutes.', 'wp-otp')); ?></textarea>
+            class="large-text"><?php echo esc_textarea($body); ?></textarea>
         <?php
     }
+
 
     /**
      * SMS Sender Name Field.
@@ -255,11 +290,15 @@ class WP_OTP_Admin_Page
     public function field_sms_sender()
     {
         $options = wp_otp_get_settings();
+
+        $sender = $options['sms_sender'] ?? '';
+        $sender = apply_filters('wpml_translate_single_string', $sender, 'WP OTP', 'SMS Sender');
         ?>
-        <label
-            for="wp_otp_sms_sender"><?php esc_html_e('Sender name for SMS messages (must be registered with 019).', 'wp-otp'); ?></label>
-        <input type="text" id="wp_otp_sms_sender" name="wp_otp_settings[sms_sender]"
-            value="<?php echo esc_attr($options['sms_sender'] ?? ''); ?>" class="regular-text" />
+        <label for="wp_otp_sms_sender">
+            <?php esc_html_e('Sender name for SMS messages (must be registered with 019).', 'wp-otp'); ?>
+        </label>
+        <input type="text" id="wp_otp_sms_sender" name="wp_otp_settings[sms_sender]" value="<?php echo esc_attr($sender); ?>"
+            class="regular-text" />
         <?php
     }
 
@@ -269,13 +308,18 @@ class WP_OTP_Admin_Page
     public function field_sms_message()
     {
         $options = wp_otp_get_settings();
+
+        $message = $options['sms_message'] ?? __('Your OTP code is {OTP}. It will expire in {MINUTES} minutes.', 'wp-otp');
+        $message = apply_filters('wpml_translate_single_string', $message, 'WP OTP', 'SMS Message');
         ?>
-        <label
-            for="wp_otp_sms_message"><?php esc_html_e('SMS text template. Use placeholders like {OTP} and {MINUTES}.', 'wp-otp'); ?></label>
+        <label for="wp_otp_sms_message">
+            <?php esc_html_e('SMS text template. Use placeholders like {OTP} and {MINUTES}.', 'wp-otp'); ?>
+        </label>
         <textarea id="wp_otp_sms_message" name="wp_otp_settings[sms_message]" rows="3"
-            class="large-text"><?php echo esc_textarea($options['sms_message'] ?? __('Your OTP code is {OTP}. It will expire in {MINUTES} minutes.', 'wp-otp')); ?></textarea>
+            class="large-text"><?php echo esc_textarea($message); ?></textarea>
         <?php
     }
+
 
     /**
      * Phone-only Auth Toggle Field.
@@ -303,24 +347,39 @@ class WP_OTP_Admin_Page
             <?php esc_html_e('Email', 'wp-otp'); ?>
         </label><br>
         <label>
-            <input type="checkbox" name="wp_otp_settings[otp_channels][]" value="sms" <?php checked(in_array('sms', $channels)); ?> />
-            <?php esc_html_e('SMS', 'wp-otp'); ?>
+            <input type="checkbox" name="wp_otp_settings[otp_channels][]" value="sms" <?php checked(in_array('sms', $channels)); ?> /><?php esc_html_e('SMS', 'wp-otp'); ?>
         </label>
         <?php
     }
 
     public function field_otp_cooldown()
-{
-    $options = wp_otp_get_settings();
-    ?>
-    <label for="wp_otp_otp_cooldown"><?php esc_html_e('Seconds before allowing resend.', 'wp-otp'); ?></label>
-    <input type="number"
-           id="wp_otp_otp_cooldown"
-           name="wp_otp_settings[otp_cooldown]"
-           value="<?php echo esc_attr($options['otp_cooldown'] ?? 30); ?>"
-           min="10" />
-    <?php
-}
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <label for="wp_otp_otp_cooldown"><?php esc_html_e('Seconds before allowing resend.', 'wp-otp'); ?></label>
+        <input type="number" id="wp_otp_otp_cooldown" name="wp_otp_settings[otp_cooldown]"
+            value="<?php echo esc_attr($options['otp_cooldown'] ?? 30); ?>" min="10" />
+        <?php
+    }
 
+    function field_otp_resend_limit()
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <input type="number" name="wp_otp_settings[otp_resend_limit]"
+            value="<?php echo esc_attr($options['otp_resend_limit'] ?? 3); ?>" min="1" />
+        <p class="description">Maximum times a user can request a new OTP within the resend window.</p>
+        <?php
+    }
+
+    function field_otp_resend_window()
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <input type="number" name="wp_otp_settings[otp_resend_window]"
+            value="<?php echo esc_attr($options['otp_resend_window'] ?? 15); ?>" min="1" />
+        <p class="description">Time window (in minutes) for counting resend attempts.</p>
+        <?php
+    }
 
 }
