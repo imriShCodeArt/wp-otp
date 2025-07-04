@@ -1,61 +1,85 @@
-<?php
-/**
- * Shortcode template: Request OTP Form
- *
- * @var array $channels
- */
+<form id="wp-otp-request-form" method="post" action="#" class="d-flex flex-column gap-3 p-3 border rounded">
 
-if (!defined('ABSPATH')) {
-    exit;
-}
-?>
-
-<form id="wp-otp-request-form" method="post" action="#">
-
-    <!-- Initial section -->
-    <div id="wp-otp-initial-section">
-        <div id="wp-otp-contact-section">
-            <?php if (count($channels) > 1): ?>
-                <label><?php esc_html_e('Choose OTP Channel:', 'wp-otp'); ?></label><br />
-                <?php foreach ($channels as $channel): ?>
-                    <label>
-                        <input type="radio" name="otp_channel" value="<?php echo esc_attr($channel); ?>" />
-                        <?php echo esc_html(ucfirst($channel)); ?>
-                    </label><br />
+    <?php if (count($channels) > 1): ?>
+        <div id="wp-otp-channel-section" class="d-flex flex-row flex-wrap align-items-center gap-3">
+            <label class="form-label mb-0">
+                <?php esc_html_e('Choose OTP Channel:', 'wp-otp'); ?>
+            </label>
+            <div class="d-flex flex-wrap gap-2">
+                <?php foreach ($channels as $index => $channel): ?>
+                    <?php
+                    $is_checked = ($index === 0) ? 'checked' : '';
+                    $id = 'otp_channel_' . $channel;
+                    ?>
+                    <div class="form-check form-check-inline">
+                        <input id="<?php echo esc_attr($id); ?>" class="form-check-input" type="radio" name="otp_channel"
+                            value="<?php echo esc_attr($channel); ?>" <?php echo $is_checked; ?> />
+                        <label class="form-check-label" for="<?php echo esc_attr($id); ?>">
+                            <?php echo esc_html(ucfirst($channel)); ?>
+                        </label>
+                    </div>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <input type="hidden" name="otp_channel" value="<?php echo esc_attr($channels[0]); ?>" />
-            <?php endif; ?>
+            </div>
+        </div>
+    <?php else: ?>
+        <input type="hidden" name="otp_channel" value="<?php echo esc_attr($channels[0]); ?>" />
+    <?php endif; ?>
 
-            <label for="otp_contact"><?php esc_html_e('Email or Phone:', 'wp-otp'); ?></label><br />
-            <input type="text" name="otp_contact" id="otp_contact" required />
+    <div class="d-flex flex-row justify-content-between gap-3">
 
-            <button type="submit" id="wp-otp-send-btn">
-                <?php esc_html_e('Send OTP', 'wp-otp'); ?>
-            </button>
+        <div class="flex-grow-1">
+            <div id="wp-otp-initial-section">
+                <div class="mb-3 d-flex align-items-center gap-2">
+                    <label for="otp_contact" id="otp_contact_label" class="form-label mb-0" style="min-width:110px;">
+                        <?php
+                        if (!empty($channels)) {
+                            echo esc_html(
+                                ucfirst($channels[0]) === 'Sms'
+                                ? __('Phone Number:', 'wp-otp')
+                                : __('Email Address:', 'wp-otp')
+                            );
+                        } else {
+                            echo esc_html__('Email or Phone:', 'wp-otp');
+                        }
+                        ?>
+                    </label>
+
+                    <input type="text" class="form-control flex-grow-1" name="otp_contact" id="otp_contact" required />
+                    <button type="submit" id="wp-otp-send-btn" class="btn btn-outline-secondary btn-sm"
+                        style="min-width:80px;">
+                        <?php esc_html_e('Send OTP', 'wp-otp'); ?>
+                    </button>
+                </div>
+            </div>
+
+            <div id="wp-otp-verification-section" style="display:none;">
+                <div class="mb-3 d-flex align-items-center gap-2">
+                    <label for="wp_otp_input" class="form-label mb-0">
+                        <?php esc_html_e('Enter OTP:', 'wp-otp'); ?>
+                    </label>
+                    <input type="text" class="form-control flex-grow-1" id="wp_otp_input" name="wp_otp_input" />
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" id="wp-otp-verify-btn" class="btn btn-outline-secondary btn-sm wp-otp-btn">
+                        <?php esc_html_e('Verify OTP', 'wp-otp'); ?>
+                    </button>
+                    <button type="button" id="wp-otp-change-contact-btn"
+                        class="btn btn-outline-secondary btn-sm wp-otp-btn">
+                        <?php esc_html_e('Change Email/Phone', 'wp-otp'); ?>
+                    </button>
+                    <button type="button" id="wp-otp-resend-btn" class="btn btn-outline-secondary btn-sm wp-otp-btn"
+                        disabled>
+                        <?php esc_html_e('Resend OTP', 'wp-otp'); ?>
+                    </button>
+                </div>
+            </div>
+
+            <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('wp_otp_nonce')); ?>" />
         </div>
 
-        <input type="hidden" name="nonce" value="<?php echo esc_attr(wp_create_nonce('wp_otp_nonce')); ?>" />
+        <div class="d-flex align-items-center">
+            <span id="wp-otp-cooldown-timer" class="text-muted small"></span>
+        </div>
     </div>
-
-    <!-- Verification section -->
-    <div id="wp-otp-verification-section" style="display:none; margin-top:15px;">
-        <label for="wp_otp_input"><?php esc_html_e('Enter OTP:', 'wp-otp'); ?></label><br />
-        <input type="text" id="wp_otp_input" name="wp_otp_input" />
-
-        <button type="button" id="wp-otp-verify-btn">
-            <?php esc_html_e('Verify OTP', 'wp-otp'); ?>
-        </button>
-
-        <button type="button" id="wp-otp-change-contact-btn">
-            <?php esc_html_e('Change Email/Phone', 'wp-otp'); ?>
-        </button>
-
-        <button type="button" id="wp-otp-resend-btn" disabled>
-            <?php esc_html_e('Resend OTP', 'wp-otp'); ?>
-        </button>
-
-        <span id="wp-otp-cooldown-timer"></span>
-    </div>
-
 </form>
