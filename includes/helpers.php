@@ -14,6 +14,8 @@ function wp_otp_sanitize_phone($phone)
 function wp_otp_default_settings()
 {
     return [
+        'otp_channels' => ['email'],
+        'otp_cooldown' => 30,
         'otp_length' => 6,
         'otp_expiry' => 5,
         'otp_resend_limit' => 3,
@@ -24,10 +26,9 @@ function wp_otp_default_settings()
         'sms_message' => 'Your OTP code is {OTP}. It will expire in {MINUTES} minutes.',
         'sms_api_key' => '',
         'sms_api_secret' => '',
+        'phone_only_auth' => '0',
     ];
 }
-
-
 
 function wp_otp_get_settings()
 {

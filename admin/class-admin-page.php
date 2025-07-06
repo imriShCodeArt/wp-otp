@@ -200,12 +200,13 @@ class WP_OTP_Admin_Page
             : '';
 
         $output['otp_resend_window'] = isset($input['otp_resend_window'])
-            ? sanitize_text_field($input['otp_resend_window'])
-            : '';
+            ? max(1, intval($input['otp_resend_window']))
+            : 15;
 
         $output['otp_resend_limit'] = isset($input['otp_resend_limit'])
-            ? sanitize_text_field($input['otp_resend_limit'])
-            : '';
+            ? max(1, intval($input['otp_resend_limit']))
+            : 3;
+
 
         $output['phone_only_auth'] = isset($input['phone_only_auth']) && $input['phone_only_auth'] === '1' ? '1' : '0';
 
