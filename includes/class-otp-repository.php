@@ -10,12 +10,19 @@ if (!defined('ABSPATH')) {
  * Class WP_OTP_Repository
  *
  * Responsible for interacting with the OTP database table.
+ *
+ * @package WpOtp
  */
 class WP_OTP_Repository
 {
-
+    /**
+     * @var string The name of the OTP table.
+     */
     protected $table_name;
 
+    /**
+     * WP_OTP_Repository constructor.
+     */
     public function __construct()
     {
         global $wpdb;
@@ -25,10 +32,11 @@ class WP_OTP_Repository
     /**
      * Save a new OTP record.
      *
-     * @param string $contact
-     * @param string $hash
-     * @param string $expires_at
-     * @return int|false Row ID or false on failure.
+     * @param string $contact    Contact identifier (email or phone).
+     * @param string $hash       Hashed OTP code.
+     * @param string $expires_at Expiry timestamp (Y-m-d H:i:s).
+     *
+     * @return int|false Row ID of the inserted record or false on failure.
      */
     public function save_otp($contact, $hash, $expires_at)
     {
@@ -40,10 +48,11 @@ class WP_OTP_Repository
     }
 
     /**
-     * Get OTP record for a contact.
+     * Retrieve the OTP record for a specific contact.
      *
-     * @param string $contact
-     * @return object|null
+     * @param string $contact The contact identifier.
+     *
+     * @return object|null Database row object or null if not found.
      */
     public function get_otp_record($contact)
     {
@@ -51,11 +60,12 @@ class WP_OTP_Repository
     }
 
     /**
-     * Update OTP status for a contact.
+     * Update the OTP status for a specific contact.
      *
-     * @param string $contact
-     * @param string $status
-     * @return int|false Rows updated or false.
+     * @param string $contact The contact identifier.
+     * @param string $status  New status value (e.g. "pending", "verified", "expired").
+     *
+     * @return int|false Number of rows updated, or false on failure.
      */
     public function update_status($contact, $status)
     {
@@ -65,27 +75,26 @@ class WP_OTP_Repository
     }
 
     /**
-     * Increment attempts counter.
+     * Increment the failed attempts counter for a contact.
      *
-     * @param string $contact
-     * @return int|false Rows updated or false.
+     * @param string $contact The contact identifier.
+     *
+     * @return int|false Number of rows updated, or false on failure.
      */
     public function increment_attempts($contact)
     {
-        $record = $this->get_otp_record($contact);
-        if (!$record) {
-            return false;
-        }
+        global $wpdb;
 
-        $new_attempts = (int) $record->attempts + 1;
-
-        return wp_otp_update_code($contact, [
-            'attempts' => $new_attempts
-        ]);
+        return $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE {$this->table_name} SET attempts = attempts + 1 WHERE contact = %s",
+                $contact
+            )
+        );
     }
 
     /**
-     * Delete expired OTPs.
+     * Delete expired OTP codes from the database.
      *
      * @return int Number of rows deleted.
      */
@@ -99,11 +108,14 @@ class WP_OTP_Repository
     }
 
     /**
-     * Count OTPs generated recently for resend limiting.
+     * Count how many OTPs were recently generated for a contact.
      *
-     * @param string $contact
-     * @param int $window_minutes
-     * @return int
+     * Useful for enforcing resend limits.
+     *
+     * @param string $contact        The contact identifier.
+     * @param int    $window_minutes Time window in minutes.
+     *
+     * @return int The number of OTPs generated in the time window.
      */
     public function count_recent_otps($contact, $window_minutes)
     {
