@@ -58,6 +58,7 @@ return array(
     'PHPCSUtils\\Utils\\UseStatements' => $vendorDir . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/UseStatements.php',
     'PHPCSUtils\\Utils\\Variables' => $vendorDir . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/Variables.php',
     'WpOtp\\WP_OTP_Admin_Ajax' => $baseDir . '/admin/class-admin-ajax.php',
+    'WpOtp\\WP_OTP_Admin_Fields' => $baseDir . '/admin/class-wp-otp-admin-fields.php',
     'WpOtp\\WP_OTP_Admin_Page' => $baseDir . '/admin/class-admin-page.php',
     'WpOtp\\WP_OTP_Auth_Overrides' => $baseDir . '/includes/class-auth-overrides.php',
     'WpOtp\\WP_OTP_CodeGenerator' => $baseDir . '/includes/class-otp-codegenerator.php',

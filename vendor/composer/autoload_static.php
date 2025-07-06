@@ -77,6 +77,7 @@ class ComposerStaticInita1b04971e16a4f5c4c52d5cfd271167d
         'PHPCSUtils\\Utils\\UseStatements' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/UseStatements.php',
         'PHPCSUtils\\Utils\\Variables' => __DIR__ . '/..' . '/phpcsstandards/phpcsutils/PHPCSUtils/Utils/Variables.php',
         'WpOtp\\WP_OTP_Admin_Ajax' => __DIR__ . '/../..' . '/admin/class-admin-ajax.php',
+        'WpOtp\\WP_OTP_Admin_Fields' => __DIR__ . '/../..' . '/admin/class-wp-otp-admin-fields.php',
         'WpOtp\\WP_OTP_Admin_Page' => __DIR__ . '/../..' . '/admin/class-admin-page.php',
         'WpOtp\\WP_OTP_Auth_Overrides' => __DIR__ . '/../..' . '/includes/class-auth-overrides.php',
         'WpOtp\\WP_OTP_CodeGenerator' => __DIR__ . '/../..' . '/includes/class-otp-codegenerator.php',
