@@ -1,14 +1,25 @@
 <?php
 
-if (!defined('WP_UNINSTALL_PLUGIN')) {
+/**
+ * Uninstall script for WP OTP plugin.
+ *
+ * This file is executed when the plugin is uninstalled via WordPress.
+ */
+
+ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
 // Remove plugin options
 delete_option('wp_otp_settings');
 
-// Drop custom OTP table
+// Drop custom OTP tables
 global $wpdb;
-$table_name = $wpdb->prefix . 'otp_codes';
 
-$wpdb->query("DROP TABLE IF EXISTS $table_name");
+// Drop OTP codes table
+$codes_table = $wpdb->prefix . 'otp_codes';
+$wpdb->query("DROP TABLE IF EXISTS `$codes_table`");
+
+// Drop OTP logs table
+$logs_table = $wpdb->prefix . 'otp_logs';
+$wpdb->query("DROP TABLE IF EXISTS `$logs_table`");
