@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 /**
  * Class WP_OTP_Admin_Ajax
  *
- * Handles AJAX requests for admin settings.
+ * Handles AJAX requests for admin and frontend OTP logic.
  */
 class WP_OTP_Admin_Ajax
 {
@@ -17,34 +17,85 @@ class WP_OTP_Admin_Ajax
     {
         add_action('wp_ajax_wp_otp_save_settings', [$this, 'save_settings']);
         add_action('wp_ajax_nopriv_wp_otp_send_otp', [$this, 'wp_otp_send_otp']);
-        add_action('wp_ajax_wp_otp_send_otp', [$this, 'wp_otp_send_otp']); // Optional for logged-in users
+        add_action('wp_ajax_wp_otp_send_otp', [$this, 'wp_otp_send_otp']);
         add_action('wp_ajax_nopriv_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
         add_action('wp_ajax_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
-
     }
 
-
-    function wp_otp_send_otp()
+    /**
+     * Handle OTP send AJAX request.
+     *
+     * @return void
+     */
+    public function wp_otp_send_otp()
     {
         check_ajax_referer('wp_otp_nonce', 'nonce');
 
         $contact = sanitize_text_field($_POST['contact'] ?? '');
-        $channel = sanitize_text_field($_POST['channel'] ?? 'email');
+        $channel = sanitize_text_field($_POST['channel'] ?? '');
+
+        if (empty($contact)) {
+            wp_send_json_error([
+                'message' => __('Contact information is required.', 'wp-otp'),
+                'code' => 'missing_contact'
+            ]);
+        }
 
         $manager = new \WpOtp\WP_OTP_Manager();
-
         $result = $manager->send_otp($contact, $channel);
 
-        if ($result) {
-            wp_send_json_success(['message' => 'OTP sent successfully.']);
+        if (!empty($result['success'])) {
+            wp_send_json_success([
+                'message' => $result['message'] ?? __('OTP sent successfully.', 'wp-otp'),
+                'code' => $result['code'] ?? ''
+            ]);
         } else {
-            wp_send_json_error(['message' => 'Failed to send OTP.']);
+            wp_send_json_error([
+                'message' => $result['message'] ?? __('Failed to send OTP.', 'wp-otp'),
+                'code' => $result['code'] ?? 'send_failed'
+            ]);
         }
     }
 
+    /**
+     * Handle OTP verification via AJAX.
+     *
+     * @return void
+     */
+    public function wp_otp_verify_otp()
+    {
+        check_ajax_referer('wp_otp_nonce', 'nonce');
+
+        $contact = sanitize_text_field($_POST['contact'] ?? '');
+        $otp = sanitize_text_field($_POST['otp'] ?? '');
+
+        if (empty($contact) || empty($otp)) {
+            wp_send_json_error([
+                'message' => __('Both contact and OTP are required.', 'wp-otp'),
+                'code' => 'missing_fields'
+            ]);
+        }
+
+        $manager = new \WpOtp\WP_OTP_Manager();
+        $result = $manager->verify_otp($contact, $otp);
+
+        if (!empty($result['success'])) {
+            wp_send_json_success([
+                'message' => $result['message'] ?? __('OTP verified successfully.', 'wp-otp'),
+                'code' => $result['code'] ?? ''
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => $result['message'] ?? __('Invalid or expired OTP.', 'wp-otp'),
+                'code' => $result['code'] ?? 'verify_failed'
+            ]);
+        }
+    }
 
     /**
-     * Save settings via AJAX.
+     * Save plugin settings via AJAX.
+     *
+     * @return void
      */
     public function save_settings()
     {
@@ -63,8 +114,6 @@ class WP_OTP_Admin_Ajax
         }
 
         $input = wp_unslash($_POST['data']);
-
-        // Sanitize via the same method as settings API
         $admin_page = new WP_OTP_Admin_Page();
         $sanitized = $admin_page->sanitize_settings($input);
 
@@ -74,23 +123,4 @@ class WP_OTP_Admin_Ajax
             'message' => __('Settings saved successfully.', 'wp-otp')
         ]);
     }
-
-    public function wp_otp_verify_otp()
-    {
-        check_ajax_referer('wp_otp_nonce', 'nonce');
-
-        $contact = sanitize_text_field($_POST['contact'] ?? '');
-        $otp = sanitize_text_field($_POST['otp'] ?? '');
-        $channel = sanitize_text_field($_POST['channel'] ?? 'email');
-
-        $manager = new \WpOtp\WP_OTP_Manager();
-        $verified = $manager->verify_otp($contact, $otp);
-
-        if ($verified) {
-            wp_send_json_success(['message' => 'OTP verified successfully.']);
-        } else {
-            wp_send_json_error(['message' => 'Invalid or expired OTP.']);
-        }
-    }
-
 }
