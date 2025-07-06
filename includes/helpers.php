@@ -20,8 +20,13 @@ function wp_otp_default_settings()
         'otp_resend_window' => 15,
         'email_subject' => 'Your OTP Code',
         'email_body' => 'Your OTP code is: {otp}',
+        'sms_sender' => '',
+        'sms_message' => 'Your OTP code is {OTP}. It will expire in {MINUTES} minutes.',
+        'sms_api_key' => '',
+        'sms_api_secret' => '',
     ];
 }
+
 
 
 function wp_otp_get_settings()

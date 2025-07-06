@@ -113,19 +113,23 @@ class WP_OTP_Admin_Page
         );
 
         $sms_fields = [
-            'sms_sender' => 'field_sms_sender',
-            'sms_message' => 'field_sms_message',
+            'sms_sender' => ['label' => __('SMS Sender Name', 'wp-otp'), 'callback' => 'field_sms_sender'],
+            'sms_message' => ['label' => __('SMS Message Template', 'wp-otp'), 'callback' => 'field_sms_message'],
+            'sms_api_key' => ['label' => __('SMS API Key', 'wp-otp'), 'callback' => 'field_sms_api_key'],
+            'sms_api_secret' => ['label' => __('SMS API Secret', 'wp-otp'), 'callback' => 'field_sms_api_secret'],
         ];
 
-        foreach ($sms_fields as $id => $callback) {
+        foreach ($sms_fields as $id => $field) {
             add_settings_field(
                 $id,
-                $this->get_field_label($id),
-                [$this->admin_fields, $callback],
+                $field['label'],
+                [$this->admin_fields, $field['callback']],
                 'wp-otp-sms',
                 'wp_otp_sms_settings'
             );
+
         }
+
     }
 
     /**
@@ -204,6 +208,15 @@ class WP_OTP_Admin_Page
             : '';
 
         $output['phone_only_auth'] = isset($input['phone_only_auth']) && $input['phone_only_auth'] === '1' ? '1' : '0';
+
+        $output['sms_api_key'] = isset($input['sms_api_key'])
+            ? sanitize_text_field($input['sms_api_key'])
+            : '';
+
+        $output['sms_api_secret'] = isset($input['sms_api_secret'])
+            ? sanitize_text_field($input['sms_api_secret'])
+            : '';
+
 
         return $output;
     }

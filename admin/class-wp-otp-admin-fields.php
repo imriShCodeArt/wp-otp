@@ -231,4 +231,31 @@ class WP_OTP_Admin_Fields
             placeholder="<?php esc_attr_e('15', 'wp-otp'); ?>" />
         <?php
     }
+
+    /**
+     * Render the SMS API Key field.
+     */
+    public function field_sms_api_key()
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <label for="wp_otp_sms_api_key"><?php esc_html_e('API Key for SMS provider.', 'wp-otp'); ?></label>
+        <input type="text" id="wp_otp_sms_api_key" name="wp_otp_settings[sms_api_key]"
+            value="<?php echo esc_attr($options['sms_api_key'] ?? ''); ?>" class="regular-text" />
+        <?php
+    }
+
+    /**
+     * Render the SMS API Secret field.
+     */
+    public function field_sms_api_secret()
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <label for="wp_otp_sms_api_secret"><?php esc_html_e('API Secret for SMS provider.', 'wp-otp'); ?></label>
+        <input type="password" id="wp_otp_sms_api_secret" name="wp_otp_settings[sms_api_secret]"
+            value="<?php echo esc_attr($options['sms_api_secret'] ?? ''); ?>" class="regular-text" />
+        <?php
+    }
+
 }
