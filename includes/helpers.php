@@ -35,10 +35,11 @@ function wp_otp_activate()
 {
     global $wpdb;
 
-    $table_name = esc_sql($wpdb->prefix . 'otp_codes');
+    $codes_table = esc_sql($wpdb->prefix . 'otp_codes');
+    $logs_table = esc_sql($wpdb->prefix . 'otp_logs');
     $charset_collate = $wpdb->get_charset_collate();
 
-    $sql = "CREATE TABLE $table_name (
+    $sql_codes = "CREATE TABLE $codes_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         contact VARCHAR(255) NOT NULL,
         code_hash VARCHAR(255) NOT NULL,
@@ -49,13 +50,24 @@ function wp_otp_activate()
         PRIMARY KEY (id)
     ) $charset_collate;";
 
+    $sql_logs = "CREATE TABLE $logs_table (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        event_type VARCHAR(50) NOT NULL,
+        contact VARCHAR(255) NOT NULL,
+        message TEXT,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta($sql);
+    dbDelta($sql_codes);
+    dbDelta($sql_logs);
 
     if (get_option('wp_otp_settings') === false) {
         update_option('wp_otp_settings', wp_otp_default_settings());
     }
 }
+
 
 
 /**

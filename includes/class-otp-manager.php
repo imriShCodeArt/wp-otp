@@ -34,6 +34,11 @@ class WP_OTP_Manager
      */
     protected $sms_client;
 
+    /**
+     * @var WP_OTP_Logger
+     */
+    protected $logger;
+
     public function __construct()
     {
         $this->code_generator = new WP_OTP_CodeGenerator();
@@ -60,12 +65,14 @@ class WP_OTP_Manager
         $resend_window = isset($options['otp_resend_window']) ? (int) $options['otp_resend_window'] : 15;
 
         if (!in_array($channel, $allowed_channels, true)) {
+            $this->logger->log('send_failed', $contact, "Channel $channel is not allowed.");
             return false;
         }
 
         $recent_count = $this->repository->count_recent_otps($contact, $resend_window);
 
         if ($recent_count >= $resend_limit) {
+            $this->logger->log('send_blocked', $contact, "Resend limit reached for $channel in last $resend_window minutes.");
             return false;
         }
 
@@ -81,13 +88,30 @@ class WP_OTP_Manager
         }
 
         if ($channel === 'email') {
-            return $this->email_delivery->send($contact, $otp, $expiry_minutes);
+            $result = $this->email_delivery->send($contact, $otp, $expiry_minutes);
+
+            if ($result) {
+                $this->logger->log('send_success', $contact, "OTP sent via email. Expires in $expiry_minutes minutes.");
+            } else {
+                $this->logger->log('send_failed', $contact, "Email delivery failed.");
+            }
+
+            return $result;
         }
 
         if ($channel === 'sms') {
-            return $this->sms_client->send_otp_sms($contact, $otp, $expiry_minutes);
+            $result = $this->sms_client->send_otp_sms($contact, $otp, $expiry_minutes);
+
+            if ($result) {
+                $this->logger->log('send_success', $contact, "OTP sent via SMS. Expires in $expiry_minutes minutes.");
+            } else {
+                $this->logger->log('send_failed', $contact, "SMS delivery failed.");
+            }
+
+            return $result;
         }
 
+        $this->logger->log('send_failed', $contact, "Unsupported channel: $channel.");
         return false;
     }
 
@@ -104,19 +128,23 @@ class WP_OTP_Manager
         $row = $this->repository->get_otp_record($contact);
 
         if (!$row) {
+            $this->logger->log('verify_failed', $contact, "No OTP record found.");
             return false;
         }
 
         if ($row->status !== 'pending') {
+            $this->logger->log('verify_failed', $contact, "OTP already {$row->status}.");
             return false;
         }
 
         if (strtotime($row->expires_at) < time()) {
             $this->repository->update_status($contact, 'expired');
+            $this->logger->log('verify_failed', $contact, "OTP expired at {$row->expires_at}.");
             return false;
         }
 
         if ($row->attempts >= $max_attempts) {
+            $this->logger->log('verify_failed', $contact, "Maximum attempts reached.");
             return false;
         }
 
@@ -124,9 +152,11 @@ class WP_OTP_Manager
 
         if ($is_valid) {
             $this->repository->update_status($contact, 'verified');
+            $this->logger->log('verify_success', $contact, "OTP verified successfully.");
             return true;
         } else {
             $this->repository->increment_attempts($contact);
+            $this->logger->log('verify_failed', $contact, "Incorrect OTP entered.");
             return false;
         }
     }
