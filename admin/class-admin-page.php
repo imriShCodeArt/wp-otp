@@ -21,8 +21,28 @@ class WP_OTP_Admin_Page
     {
         add_action('admin_menu', [$this, 'register_page']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts']);
+
         $this->admin_fields = new WP_OTP_Admin_Fields();
     }
+
+    public function enqueue_admin_scripts($hook)
+    {
+        // Check page to load only on plugin page
+        if (!isset($_GET['page']) || $_GET['page'] !== 'wp-otp') {
+            return;
+        }
+
+        wp_enqueue_script(
+            'wp-otp-admin',
+            WP_OTP_URL . 'admin/assets/js/wp-otp-admin.js',
+            ['jquery'],
+            WP_OTP_VERSION,
+            true
+        );
+    }
+
+
 
     /**
      * Register the admin menu page.
@@ -221,14 +241,25 @@ class WP_OTP_Admin_Page
 
         return $output;
     }
-
     /**
      * Render the admin settings page.
      */
     public function render_page()
     {
-        $active_tab = $_GET['tab'] ?? 'settings';
+        // Check for CSV download first and handle immediately
+        if (
+            isset($_GET['tab'], $_GET['download_csv']) &&
+            $_GET['tab'] === 'logs'
+        ) {
+            // Ensure no previous output breaks headers
+            if (ob_get_length()) {
+                ob_end_clean();
+            }
+            $this->download_logs_csv();
+            exit;
+        }
 
+        $active_tab = $_GET['tab'] ?? 'settings';
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('WP OTP Settings', 'wp-otp'); ?></h1>
@@ -270,16 +301,126 @@ class WP_OTP_Admin_Page
 
     /**
      * Render Logs Tab.
-     *
-     * @return void
      */
     public function render_logs_tab()
     {
         global $wpdb;
 
         $table = $wpdb->prefix . 'otp_logs';
-        $logs = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT 100");
+
+        $sql = "SELECT * FROM $table WHERE 1=1";
+        $values = [];
+
+        if (!empty($_GET['from_date'])) {
+            $sql .= " AND created_at >= %s";
+            $values[] = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+        }
+
+        if (!empty($_GET['to_date'])) {
+            $sql .= " AND created_at <= %s";
+            $values[] = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+        }
+
+        if (!empty($_GET['contact'])) {
+            $sql .= " AND contact LIKE %s";
+            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['contact'])) . '%';
+        }
+
+        if (!empty($_GET['channel'])) {
+            $channel = sanitize_text_field($_GET['channel']);
+            // channel filter is inferred from event_type
+            $sql .= " AND event_type LIKE %s";
+            $values[] = '%' . $wpdb->esc_like($channel) . '%';
+        }
+
+        if (!empty($_GET['event_type'])) {
+            $sql .= " AND event_type = %s";
+            $values[] = sanitize_text_field($_GET['event_type']);
+        }
+
+        $sql .= " ORDER BY created_at DESC LIMIT 100";
+
+        $logs = $wpdb->get_results($wpdb->prepare($sql, ...$values));
 
         include WP_OTP_PATH . 'admin/views/logs-tab.php';
     }
+
+    /**
+     * Download logs CSV.
+     */
+    public function download_logs_csv()
+    {
+        if (headers_sent()) {
+            wp_die(__('Cannot export CSV: headers already sent.', 'wp-otp'));
+        }
+
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'otp_logs';
+
+        $sql = "SELECT * FROM $table WHERE 1=1";
+        $values = [];
+
+        if (!empty($_GET['from_date'])) {
+            $sql .= " AND created_at >= %s";
+            $values[] = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+        }
+
+        if (!empty($_GET['to_date'])) {
+            $sql .= " AND created_at <= %s";
+            $values[] = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+        }
+
+        if (!empty($_GET['contact'])) {
+            $sql .= " AND contact LIKE %s";
+            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['contact'])) . '%';
+        }
+
+        if (!empty($_GET['channel'])) {
+            $sql .= " AND event_type LIKE %s";
+            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['channel'])) . '%';
+        }
+
+        if (!empty($_GET['event_type'])) {
+            $sql .= " AND event_type = %s";
+            $values[] = sanitize_text_field($_GET['event_type']);
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+
+        $query = $values ? $wpdb->prepare($sql, ...$values) : $sql;
+        $logs = $wpdb->get_results($query);
+
+        if (empty($logs)) {
+            wp_die(__('No logs found for export.', 'wp-otp'));
+        }
+
+        // Increase time limit for large exports
+        if (!ini_get('safe_mode')) {
+            set_time_limit(300);
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=otp_logs.csv');
+
+        $output = fopen('php://output', 'w');
+
+        // CSV header
+        fputcsv($output, ['ID', 'Event Type', 'Contact', 'Message', 'Created At']);
+
+        foreach ($logs as $log) {
+            fputcsv($output, [
+                $log->id,
+                $log->event_type,
+                $log->contact,
+                $log->message,
+                $log->created_at,
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+
 }
