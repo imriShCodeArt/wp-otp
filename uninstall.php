@@ -6,7 +6,7 @@
  * This file is executed when the plugin is uninstalled via WordPress.
  */
 
- if (!defined('WP_UNINSTALL_PLUGIN')) {
+if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
@@ -17,9 +17,9 @@ delete_option('wp_otp_settings');
 global $wpdb;
 
 // Drop OTP codes table
-$codes_table = $wpdb->prefix . 'otp_codes';
+$codes_table = esc_sql($wpdb->prefix . 'otp_codes');
 $wpdb->query("DROP TABLE IF EXISTS `$codes_table`");
 
 // Drop OTP logs table
-$logs_table = $wpdb->prefix . 'otp_logs';
+$logs_table = esc_sql($wpdb->prefix . 'otp_logs');
 $wpdb->query("DROP TABLE IF EXISTS `$logs_table`");

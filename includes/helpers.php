@@ -60,7 +60,9 @@ function wp_otp_activate()
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         event_type VARCHAR(50) NOT NULL,
         contact VARCHAR(255) NOT NULL,
-        message TEXT,
+        message TEXT NULL,
+        channel VARCHAR(50) NULL,
+        user_id BIGINT UNSIGNED NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id)
     ) $charset_collate;";
@@ -73,6 +75,7 @@ function wp_otp_activate()
         update_option('wp_otp_settings', wp_otp_default_settings());
     }
 }
+
 
 
 
