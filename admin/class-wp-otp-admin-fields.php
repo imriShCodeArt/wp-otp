@@ -233,28 +233,56 @@ class WP_OTP_Admin_Fields
     }
 
     /**
-     * Render the SMS API Key field.
+     * Render the SMS Username field.
+     *
+     * @return void
      */
-    public function field_sms_api_key()
+    public function field_sms_username(): void
     {
         $options = wp_otp_get_settings();
         ?>
-        <label for="wp_otp_sms_api_key"><?php esc_html_e('API Key for SMS provider.', 'wp-otp'); ?></label>
-        <input type="text" id="wp_otp_sms_api_key" name="wp_otp_settings[sms_api_key]"
-            value="<?php echo esc_attr($options['sms_api_key'] ?? ''); ?>" class="regular-text" />
+        <label for="wp_otp_sms_username">
+            <?php esc_html_e('Username for your 019 SMS account.', 'wp-otp'); ?>
+        </label>
+        <input type="text" class="regular-text wp-otp-field" id="wp_otp_sms_username" name="wp_otp_settings[sms_username]"
+            value="<?php echo esc_attr($options['sms_username'] ?? ''); ?>"
+            placeholder="<?php esc_attr_e('Your019Username', 'wp-otp'); ?>" />
         <?php
     }
 
     /**
-     * Render the SMS API Secret field.
+     * Render the SMS Password field.
+     *
+     * @return void
      */
-    public function field_sms_api_secret()
+    public function field_sms_password(): void
     {
         $options = wp_otp_get_settings();
         ?>
-        <label for="wp_otp_sms_api_secret"><?php esc_html_e('API Secret for SMS provider.', 'wp-otp'); ?></label>
-        <input type="password" id="wp_otp_sms_api_secret" name="wp_otp_settings[sms_api_secret]"
-            value="<?php echo esc_attr($options['sms_api_secret'] ?? ''); ?>" class="regular-text" />
+        <label for="wp_otp_sms_password">
+            <?php esc_html_e('Password for your 019 SMS account.', 'wp-otp'); ?>
+        </label>
+        <input type="password" class="regular-text wp-otp-field" id="wp_otp_sms_password" name="wp_otp_settings[sms_password]"
+            value="<?php echo esc_attr($options['sms_password'] ?? ''); ?>"
+            placeholder="<?php esc_attr_e('********', 'wp-otp'); ?>" />
+        <?php
+    }
+
+    /**
+     * Render the SMS Access Token field.
+     *
+     * @return void
+     */
+    public function field_sms_access_token(): void
+    {
+        $options = wp_otp_get_settings();
+        ?>
+        <label for="wp_otp_sms_access_token">
+            <?php esc_html_e('Access Token for 019 SMS API (generated after login).', 'wp-otp'); ?>
+        </label>
+        <input type="text" class="regular-text wp-otp-field" id="wp_otp_sms_access_token"
+            name="wp_otp_settings[sms_access_token]" value="<?php echo esc_attr($options['sms_access_token'] ?? ''); ?>"
+            placeholder="<?php esc_attr_e('Auto-generated token', 'wp-otp'); ?>" readonly />
         <?php
     }
 

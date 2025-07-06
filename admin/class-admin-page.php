@@ -127,7 +127,7 @@ class WP_OTP_Admin_Page
         // SMS TAB
         add_settings_section(
             'wp_otp_sms_settings',
-            __('SMS Settings', 'wp-otp'),
+            __('SMS Settings (019 API)', 'wp-otp'),
             null,
             'wp-otp-sms'
         );
@@ -135,8 +135,9 @@ class WP_OTP_Admin_Page
         $sms_fields = [
             'sms_sender' => ['label' => __('SMS Sender Name', 'wp-otp'), 'callback' => 'field_sms_sender'],
             'sms_message' => ['label' => __('SMS Message Template', 'wp-otp'), 'callback' => 'field_sms_message'],
-            'sms_api_key' => ['label' => __('SMS API Key', 'wp-otp'), 'callback' => 'field_sms_api_key'],
-            'sms_api_secret' => ['label' => __('SMS API Secret', 'wp-otp'), 'callback' => 'field_sms_api_secret'],
+            'sms_username' => ['label' => __('SMS API Username', 'wp-otp'), 'callback' => 'field_sms_username'],
+            'sms_password' => ['label' => __('SMS API Password', 'wp-otp'), 'callback' => 'field_sms_password'],
+            'sms_access_token' => ['label' => __('SMS API Access Token', 'wp-otp'), 'callback' => 'field_sms_access_token'],
         ];
 
         foreach ($sms_fields as $id => $field) {
@@ -147,10 +148,9 @@ class WP_OTP_Admin_Page
                 'wp-otp-sms',
                 'wp_otp_sms_settings'
             );
-
         }
-
     }
+
 
     /**
      * Get translated field label.
@@ -227,20 +227,24 @@ class WP_OTP_Admin_Page
             ? max(1, intval($input['otp_resend_limit']))
             : 3;
 
-
         $output['phone_only_auth'] = isset($input['phone_only_auth']) && $input['phone_only_auth'] === '1' ? '1' : '0';
 
-        $output['sms_api_key'] = isset($input['sms_api_key'])
-            ? sanitize_text_field($input['sms_api_key'])
+        // New 019 API fields:
+        $output['sms_username'] = isset($input['sms_username'])
+            ? sanitize_text_field($input['sms_username'])
             : '';
 
-        $output['sms_api_secret'] = isset($input['sms_api_secret'])
-            ? sanitize_text_field($input['sms_api_secret'])
+        $output['sms_password'] = isset($input['sms_password'])
+            ? sanitize_text_field($input['sms_password'])
             : '';
 
+        $output['sms_access_token'] = isset($input['sms_access_token'])
+            ? sanitize_text_field($input['sms_access_token'])
+            : '';
 
         return $output;
     }
+
     /**
      * Render the admin settings page.
      */

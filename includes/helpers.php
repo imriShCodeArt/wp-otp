@@ -6,11 +6,22 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Sanitize a phone number by stripping non-digit characters.
+ *
+ * @param string $phone
+ * @return string
+ */
 function wp_otp_sanitize_phone($phone)
 {
     return preg_replace('/\D+/', '', $phone);
 }
 
+/**
+ * Return default plugin settings.
+ *
+ * @return array
+ */
 function wp_otp_default_settings()
 {
     return [
@@ -24,12 +35,18 @@ function wp_otp_default_settings()
         'email_body' => 'Your OTP code is: {otp}',
         'sms_sender' => '',
         'sms_message' => 'Your OTP code is {OTP}. It will expire in {MINUTES} minutes.',
-        'sms_api_key' => '',
-        'sms_api_secret' => '',
+        'sms_username' => '',
+        'sms_password' => '',
+        'sms_access_token' => '',
         'phone_only_auth' => '0',
     ];
 }
 
+/**
+ * Retrieve merged plugin settings (defaults + saved).
+ *
+ * @return array
+ */
 function wp_otp_get_settings()
 {
     $defaults = wp_otp_default_settings();
@@ -37,6 +54,11 @@ function wp_otp_get_settings()
     return array_merge($defaults, $saved);
 }
 
+/**
+ * Run on plugin activation. Creates DB tables and default options.
+ *
+ * @return void
+ */
 function wp_otp_activate()
 {
     global $wpdb;
@@ -76,16 +98,13 @@ function wp_otp_activate()
     }
 }
 
-
-
-
 /**
  * Insert a new OTP record into wp_otp_codes.
  *
  * @param string $contact
  * @param string $code_hash
- * @param string $expires_at  e.g. current_time('mysql')
- * @return int|false Inserted row ID or false on failure.
+ * @param string $expires_at
+ * @return int|false
  */
 function wp_otp_insert_code($contact, $code_hash, $expires_at)
 {
@@ -113,20 +132,15 @@ function wp_otp_insert_code($contact, $code_hash, $expires_at)
         ]
     );
 
-    if (false === $result) {
-        return false;
-    }
-
-    return $wpdb->insert_id;
+    return ($result === false) ? false : $wpdb->insert_id;
 }
 
-
 /**
- * Update OTP record for a given contact.
+ * Update an OTP record by contact.
  *
  * @param string $contact
- * @param array  $data  e.g. ['status' => 'verified']
- * @return int|false Rows updated or false on failure.
+ * @param array  $data
+ * @return int|false
  */
 function wp_otp_update_code($contact, $data)
 {
@@ -166,16 +180,11 @@ function wp_otp_update_code($contact, $data)
         ['%s']
     );
 
-    if ($result === false) {
-        return false;
-    }
-
-    return true;
+    return ($result === false) ? false : $result;
 }
 
-
 /**
- * Retrieve an OTP record by contact.
+ * Retrieve an OTP record for a given contact.
  *
  * @param string $contact
  * @return object|null
@@ -186,20 +195,18 @@ function wp_otp_get_code($contact)
 
     $table = $wpdb->prefix . 'otp_codes';
 
-    $sql = $wpdb->prepare(
-        "SELECT * FROM $table WHERE contact = %s LIMIT 1",
-        $contact
+    return $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT * FROM $table WHERE contact = %s LIMIT 1",
+            $contact
+        )
     );
-
-    $row = $wpdb->get_row($sql);
-
-    return $row;
 }
 
 /**
- * Delete expired OTPs from table.
+ * Delete expired OTP codes.
  *
- * @return int Number of rows deleted.
+ * @return int
  */
 function wp_otp_cleanup_expired_codes()
 {
@@ -207,14 +214,10 @@ function wp_otp_cleanup_expired_codes()
 
     $table = $wpdb->prefix . 'otp_codes';
 
-    $now = current_time('mysql');
-
-    $result = $wpdb->query(
+    return $wpdb->query(
         $wpdb->prepare(
             "DELETE FROM $table WHERE expires_at < %s",
-            $now
+            current_time('mysql')
         )
     );
-
-    return $result;
 }
