@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: wp-otp 1.0\n"
 "POT-Creation-Date: 2025-07-04 12:00+0300\n"
-"PO-Revision-Date: 2025-07-04 10:18+0000\n"
+"PO-Revision-Date: 2025-07-07 10:55+0000\n"
 "Last-Translator: \n"
-"Language-Team: Hebrew\n"
+"Language-Team: עִבְרִית\n"
 "Language: he_IL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,43 +14,135 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "X-Loco-Version: 2.8.0; wp-6.8.1; php-8.2.27"
 
-#: admin/class-admin-page.php:279
+#: admin/class-wp-otp-admin-fields.php:267
+msgid "********"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:231
+msgid "15"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:214
+msgid "3"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:197
+msgid "30"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:48
+msgid "5"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:32
+msgid "6"
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:281
+msgid "Access Token for 019 SMS API (generated after login)."
+msgstr "אסימון גישה עבור 019 SMS API (נוצר לאחר הכניסה)."
+
+#: admin/views/logs-tab.php:25 admin/views/logs-tab.php:34
+msgid "All"
+msgstr "הכל"
+
+#: includes/class-shortcodes.php:72
+msgid "An error occurred."
+msgstr "קרתה טעות"
+
+#: admin/class-wp-otp-admin-fields.php:285
+msgid "Auto-generated token"
+msgstr "אסימון שנוצר אוטומטית"
+
+#: includes/class-sms-019-client.php:182
+msgid "Balance fetched successfully."
+msgstr "היתרה נלקחה בהצלחה."
+
+#: admin/class-wp-otp-admin-fields.php:91
 msgid "Body text for OTP email. Use placeholders like {OTP} and {MINUTES}."
 msgstr "גוף הטקסט עבור אימייל OTP. השתמשו במצייני מיקום כמו {OTP} ו-{MINUTES}."
+
+#: admin/class-admin-ajax.php:74
+msgid "Both contact and OTP are required."
+msgstr "נדרשים גם יצירת קשר וגם OTP."
+
+#: admin/class-admin-page.php:358
+msgid "Cannot export CSV: headers already sent."
+msgstr "לא ניתן לייצא קבצי CSV: כותרות כבר נשלחו."
 
 #: templates/shortcode-request-form/wp-otp-verification-section.php:14
 msgid "Change Email/Phone"
 msgstr "שנה אימייל/טלפון"
 
+#: includes/class-otp-manager.php:81
+msgid "Channel is not allowed."
+msgstr "הערוץ אינו מותר."
+
+#: admin/views/logs-tab.php:23
+msgid "Channel:"
+msgstr "ערוץ:"
+
 #: templates/shortcode-request-form/wp-otp-channel-selector.php:4
 msgid "Choose OTP Channel:"
 msgstr "בחר ערוץ OTP:"
 
-#: admin/class-admin-page.php:347
+#: admin/views/logs-tab.php:68
+msgid "Contact"
+msgstr "איש קשר"
+
+#: admin/class-admin-ajax.php:39 includes/class-shortcodes.php:71
+msgid "Contact information is required."
+msgstr "נדרשים פרטי קשר."
+
+#: admin/views/logs-tab.php:18
+msgid "Contact:"
+msgstr "איש קשר:"
+
+#: includes/class-otp-manager.php:107
+msgid "Could not save OTP to the database."
+msgstr "לא ניתן היה לשמור את קוד ה-OTP במסד הנתונים."
+
+#: admin/views/logs-tab.php:66
+msgid "Date"
+msgstr "תאריך"
+
+#: admin/views/logs-tab.php:55
+msgid "Download CSV"
+msgstr "הורד CSV"
+
+#: admin/class-admin-page.php:277 admin/class-wp-otp-admin-fields.php:176
 msgid "Email"
 msgstr "אימייל"
 
-#: templates/shortcode-request-form/wp-otp-initial-section.php:9
+#: includes/class-shortcodes.php:65
 msgid "Email Address:"
 msgstr "כתובת מייל:"
 
-#: admin/class-admin-page.php:117
+#: admin/class-admin-page.php:172
 msgid "Email Body"
 msgstr "גוף הודעת המייל"
 
-#: templates/shortcode-request-form/wp-otp-initial-section.php:12
+#: includes/class-otp-manager.php:126
+msgid "Email delivery failed."
+msgstr "שליחת האימייל נכשלה."
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:5
 msgid "Email or Phone:"
 msgstr "אימייל או טלפון:"
 
-#: admin/class-admin-page.php:109
+#: admin/class-admin-page.php:107
+msgid "Email Settings"
+msgstr ""
+
+#: admin/class-admin-page.php:171
 msgid "Email Subject"
 msgstr "נושא מייל"
 
-#: admin/class-admin-page.php:141
+#: admin/class-admin-page.php:170
 msgid "Enable Phone-only Authentication"
 msgstr "הפעל אימות טלפוני בלבד"
 
-#: admin/class-admin-page.php:334
+#: admin/class-wp-otp-admin-fields.php:159
 msgid "Enable phone-only login/registration (no username or password)."
 msgstr "הפעל כניסה/רישום דרך הטלפון בלבד (ללא שם משתמש או סיסמה)."
 
@@ -58,129 +150,344 @@ msgstr "הפעל כניסה/רישום דרך הטלפון בלבד (ללא שם
 msgid "Enter OTP:"
 msgstr "הזן סיסמא חד פעמית:"
 
-#: admin/class-admin-page.php:243
+#: admin/views/logs-tab.php:67
+msgid "Event Type"
+msgstr "סוג אירוע"
+
+#: admin/views/logs-tab.php:32
+msgid "Event Type:"
+msgstr ""
+"סוג אירוע:\n"
+
+#: includes/class-sms-019-client.php:77
+msgid "Failed to generate SMS API token automatically."
+msgstr "יצירת אסימון SMS API באופן אוטומטי נכשלה."
+
+#: includes/class-sms-019-client.php:231 includes/class-sms-019-client.php:286
+msgid "Failed to generate SMS API token."
+msgstr "נכשלה יצירת אסימון API של SMS."
+
+#: admin/class-admin-ajax.php:54
+msgid "Failed to send OTP."
+msgstr "שליחת OTP נכשלה."
+
+#: admin/views/logs-tab.php:51
+msgid "Filter Logs"
+msgstr "סינון רשומות: "
+
+#: admin/views/logs-tab.php:8
+msgid "From Date:"
+msgstr "מתאריך: "
+
+#: admin/class-admin-page.php:79
+msgid "General Settings"
+msgstr "הגדרות כלליות"
+
+#: admin/class-wp-otp-admin-fields.php:45
 msgid "How long the OTP is valid, in minutes."
 msgstr "כמה זמן ה-OTP תקף, בדקות."
 
-#: admin/class-admin-ajax.php:61
+#: includes/class-otp-manager.php:230
+msgid "Incorrect OTP. Please try again."
+msgstr "קוד OTP שגוי. אנא נסה שוב."
+
+#: admin/class-admin-ajax.php:89
+msgid "Invalid or expired OTP."
+msgstr "OTP לא חוקי או פג תוקף."
+
+#: admin/class-admin-ajax.php:112
 msgid "Invalid request data."
 msgstr "נתוני בקשה לא חוקיים."
 
-#: admin/class-admin-page.php:230
+#: includes/class-sms-019-client.php:365
+msgid "Invalid XML response."
+msgstr ""
+
+#: admin/class-wp-otp-admin-fields.php:29
 msgid "Length of the OTP code (4-10 digits)."
 msgstr "אורך קוד ה-OTP (4-10 ספרות)."
 
-#: admin/class-admin-page.php:48
+#: admin/class-admin-page.php:283
+msgid "Logs"
+msgstr "רשומות"
+
+#: includes/class-otp-manager.php:210
+msgid ""
+"Maximum attempts reached. Your OTP is now expired. Please request a new one."
+msgstr "הגעת למספר הניסיונות המרבי. קוד ה-OTP שלך פג תוקף. אנא בקש חדש."
+
+#: admin/class-wp-otp-admin-fields.php:211
+msgid "Maximum times a user can request a new OTP within the resend window."
+msgstr "מספר הפעמים המרבי שמשתמש יכול לבקש OTP חדש במסגרת חלון השליחה החוזרת."
+
+#: admin/views/logs-tab.php:69
+msgid "Message"
+msgstr "הודעה"
+
+#: includes/class-sms-019-client.php:270
+msgid "New API token generated and saved."
+msgstr "אסימון API חדש נוצר ונשמר."
+
+#: includes/class-sms-019-client.php:263
+msgid "New SMS API token generated and saved:"
+msgstr "אסימון SMS API חדש נוצר ונשמר:"
+
+#: includes/class-sms-019-client.php:71
+msgid "New SMS API token generated automatically:"
+msgstr "אסימון SMS API חדש נוצר אוטומטית:"
+
+#: admin/class-admin-page.php:399
+msgid "No logs found for export."
+msgstr "לא נמצאו יומני רישום לייצוא."
+
+#: admin/views/logs-tab.php:61
+msgid "No logs found."
+msgstr "לא נמצאו יומנים."
+
+#: includes/class-otp-manager.php:181
+msgid "No OTP found for this contact."
+msgstr "לא נמצא OTP עבור איש קשר זה."
+
+#: admin/class-admin-page.php:164
 msgid "OTP Channels"
 msgstr "ערוץ סיסמא חד פעמית"
 
-#: admin/class-admin-page.php:56
+#: admin/class-admin-page.php:165
 msgid "OTP Cooldown (seconds)"
 msgstr "זמן צינון של הקוד החד פעמי (שניות)"
 
-#: admin/class-admin-page.php:101
+#: admin/class-admin-page.php:169
 msgid "OTP Expiry (minutes)"
 msgstr "תוקף הקוד החד פעמי(בדקות)"
 
-#: admin/class-admin-page.php:93
+#: admin/class-admin-page.php:168
 msgid "OTP Length"
 msgstr "אורך הקוד החד פעמי"
 
-#: admin/class-admin-page.php:86
-msgid "OTP Settings"
-msgstr "הגדרות הקוד החד פעמי"
+#: admin/views/logs-tab.php:1
+msgid "OTP Logs"
+msgstr "רשומות OTP"
 
-#: templates/shortcode-request-form/wp-otp-initial-section.php:8
+#: includes/class-shortcodes.php:89
+msgid "OTP request form template not found."
+msgstr "תבנית טופס בקשת OTP לא נמצאה."
+
+#: admin/class-admin-page.php:166
+msgid "OTP Resend Limit"
+msgstr "מגבלת שליחה חוזרת של OTP"
+
+#: admin/class-admin-page.php:167
+msgid "OTP Resend Window (minutes)"
+msgstr "חלון שליחה חוזרת של OTP (בדקות)"
+
+#: admin/class-admin-ajax.php:49
+msgid "OTP sent successfully."
+msgstr "סיסמת OTP נשלחה בהצלחה."
+
+#: includes/class-otp-manager.php:119
+msgid "OTP sent via email."
+msgstr "OTP נשלח בדוא\"ל."
+
+#: includes/class-otp-manager.php:139
+msgid "OTP sent via SMS."
+msgstr "OTP נשלח באמצעות SMS."
+
+#: admin/class-admin-ajax.php:84 includes/class-otp-manager.php:222
+msgid "OTP verified successfully."
+msgstr "OTP אומת בהצלחה."
+
+#: admin/class-wp-otp-admin-fields.php:263
+msgid "Password for your 019 SMS account."
+msgstr "סיסמה לחשבון ה-SMS 019 שלך."
+
+#: includes/class-shortcodes.php:69
+msgid "Phone number must be exactly %d digits."
+msgstr "מספר הטלפון חייב להיות באורך %d ספרות בדיוק."
+
+#: includes/class-shortcodes.php:70
+msgid "Phone number must start with digit 5."
+msgstr "מספר הטלפון חייב להתחיל בספרה 5."
+
+#: includes/class-shortcodes.php:64
 msgid "Phone Number:"
 msgstr "מספר טלפון:"
+
+#: includes/class-shortcodes.php:67
+msgid "Please enter a valid email address."
+msgstr "אנא הזן כתובת דוא\"ל תקפה."
+
+#: includes/class-shortcodes.php:105
+msgid "Please enter a valid email or phone number."
+msgstr "אנא הזן כתובת דוא\"ל או מספר טלפון תקינים."
+
+#: includes/class-shortcodes.php:66
+msgid "Please enter a valid phone number."
+msgstr "אנא הזן מספר טלפון תקין."
+
+#: includes/class-shortcodes.php:68
+msgid "Please wait until the cooldown finishes."
+msgstr "אנא המתן עד לסיום זמן הקירור."
+
+#: includes/class-otp-manager.php:92
+msgid "Resend limit reached. Please try again later."
+msgstr "הגעת למגבלת השליחה החוזרת. אנא נסה שוב מאוחר יותר."
 
 #: templates/shortcode-request-form/wp-otp-verification-section.php:17
 msgid "Resend OTP"
 msgstr "שליחה מחדש"
 
-#: admin/class-admin-page.php:359
+#: admin/class-wp-otp-admin-fields.php:194
 msgid "Seconds before allowing resend."
 msgstr "שניות לפני מתן אפשרות שליחה חוזרת."
 
 #. Description of the plugin
-#: wp-otp.php
 msgid ""
 "Send and verify One-Time Passwords via email or 019 SMS for WordPress users."
 msgstr ""
 "שלחו ואימות סיסמאות חד-פעמיות באמצעות דוא\"ל או SMS 019 עבור משתמשי וורדפרס."
 
-#: templates/shortcode-request-form/wp-otp-initial-section.php:20
+#: admin/views/logs-tab.php:39
+msgid "Send Failed"
+msgstr "השליחה נכשלה"
+
+#: templates/shortcode-request-form/wp-otp-initial-section.php:15
 msgid "Send OTP"
 msgstr "שליחת קוד חד פעמי"
 
-#: admin/class-admin-page.php:298
+#: admin/views/logs-tab.php:36
+msgid "Send Success"
+msgstr "נשלח בהצלחה"
+
+#: admin/class-wp-otp-admin-fields.php:115
 msgid "Sender name for SMS messages (must be registered with 019)."
 msgstr "שם השולח עבור הודעות SMS (חובה להיות רשום ב-019)."
 
-#: admin/class-admin-ajax.php:74
+#: admin/class-admin-page.php:274
+msgid "Settings"
+msgstr "הגדרות"
+
+#: admin/class-admin-ajax.php:123
 msgid "Settings saved successfully."
 msgstr "ההגדרות נשמרו בהצלחה."
 
-#: admin/class-admin-page.php:350
+#: admin/class-admin-page.php:280 admin/class-wp-otp-admin-fields.php:180
 msgid "SMS"
 msgstr ""
 
-#: admin/class-admin-page.php:133
+#: admin/class-admin-page.php:140
+msgid "SMS API Access Token"
+msgstr "אסימון גישה ל-API של SMS"
+
+#: admin/class-admin-page.php:139
+msgid "SMS API Password"
+msgstr "סיסמת API של SMS"
+
+#: admin/class-admin-page.php:138
+msgid "SMS API Username"
+msgstr "שם משתמש של SMS API"
+
+#: includes/class-otp-manager.php:146
+msgid "SMS delivery failed."
+msgstr "משלוח SMS נכשל."
+
+#: admin/class-admin-page.php:137 admin/class-admin-page.php:174
 msgid "SMS Message Template"
 msgstr "תבנית הודעת SMS"
 
-#: admin/class-admin-page.php:125
+#: admin/class-admin-page.php:136 admin/class-admin-page.php:173
 msgid "SMS Sender Name"
 msgstr "שם שולח SMS"
 
-#: admin/class-admin-page.php:316
+#: includes/class-sms-019-client.php:127
+msgid "SMS sent successfully."
+msgstr "SMS נשלח בהצלחה."
+
+#: admin/class-admin-page.php:130
+msgid "SMS Settings (019 API)"
+msgstr "הגדרות SMS (019 API)"
+
+#: admin/class-wp-otp-admin-fields.php:139
 msgid "SMS text template. Use placeholders like {OTP} and {MINUTES}."
 msgstr "תבנית הודעת SMS. השתמשו במצייני מיקום כמו {OTP} ו-{MINUTES}."
 
-#: admin/class-admin-page.php:258
+#: admin/class-wp-otp-admin-fields.php:68
 msgid "Subject line for OTP email."
 msgstr "שורת נושא עבור דוא\"ל OTP."
 
-#: admin/views/logs-page.php:12
-msgid "This page will display logs of OTP sends and verifications."
-msgstr "דף זה יציג יומני שליחה ואימותים של סיסמה חד פעמית (OTP)."
+#: includes/class-otp-manager.php:190
+#, php-format
+msgid "This OTP has already been %s."
+msgstr "סיסמת ה-OTP הזו כבר הייתה %s."
+
+#: includes/class-otp-manager.php:200
+msgid "This OTP has expired. Please request a new one."
+msgstr "פג תוקף קוד ה-OTP הזה. אנא בקש קוד חדש."
+
+#: admin/class-wp-otp-admin-fields.php:228
+msgid "Time window (in minutes) for counting resend attempts."
+msgstr "חלון זמן (בדקות) לספירת ניסיונות שליחה חוזרת."
+
+#: admin/views/logs-tab.php:13
+msgid "To Date:"
+msgstr "עד התאריך:"
+
+#: includes/class-otp-manager.php:155
+msgid "Unsupported channel."
+msgstr "ערוץ לא נתמך."
+
+#: admin/class-wp-otp-admin-fields.php:245
+msgid "Username for your 019 SMS account."
+msgstr "שם משתמש עבור חשבון ה-SMS 019 שלך."
+
+#: admin/views/logs-tab.php:45
+msgid "Verify Failed"
+msgstr "האימות נכשל"
 
 #: templates/shortcode-request-form/wp-otp-verification-section.php:11
 msgid "Verify OTP"
 msgstr "אימות קוד חד\"פ"
 
-#. Plugin Name of the plugin
-#: wp-otp.php admin/class-admin-page.php:31
+#: admin/views/logs-tab.php:42
+msgid "Verify Success"
+msgstr "האימות הצליח!"
+
+#. Name of the plugin
+#: admin/class-admin-page.php:56
 msgid "WP OTP"
 msgstr ""
 
-#: admin/views/logs-page.php:11
-msgid "WP OTP Logs"
-msgstr ""
-
-#: admin/class-admin-page.php:30 admin/class-admin-page.php:211
-#: admin/views/settings-page.php:11
+#: admin/class-admin-page.php:55 admin/class-admin-page.php:269
 msgid "WP OTP Settings"
-msgstr ""
+msgstr "הגדרות WP OTP"
 
-#: admin/class-admin-ajax.php:55
+#: admin/class-admin-ajax.php:106
 msgid "You do not have permission to perform this action."
 msgstr "אין לך הרשאה לבצע פעולה זו."
 
 #. Author of the plugin
-#: wp-otp.php
 msgid "Your Name"
 msgstr "שם"
 
-#: admin/class-admin-page.php:255 includes/class-delivery-email.php:32
+#: admin/class-wp-otp-admin-fields.php:60
+#: admin/class-wp-otp-admin-fields.php:70 includes/class-delivery-email.php:32
 msgid "Your OTP Code"
 msgstr "הקוד החד\"פ שלך"
 
-#: admin/class-admin-page.php:312 includes/class-delivery-email.php:37
+#: admin/class-wp-otp-admin-fields.php:130
+#: admin/class-wp-otp-admin-fields.php:142 includes/class-delivery-email.php:37
 msgid "Your OTP code is {OTP}. It will expire in {MINUTES} minutes."
 msgstr ""
 "קוד ה-OTP שלך הוא {OTP}. הוא יפוג תוקפו בעוד {MINUTES} דקות.\n"
 
-#: admin/class-admin-page.php:273
+#: admin/class-wp-otp-admin-fields.php:82
+#: admin/class-wp-otp-admin-fields.php:94
 msgid "Your OTP code is: {OTP}. It will expire in {MINUTES} minutes."
 msgstr "קוד ה-OTP שלך הוא: {OTP}. הוא יפוג תוקפו בעוד {MINUTES} דקות."
+
+#: admin/class-wp-otp-admin-fields.php:249
+msgid "Your019Username"
+msgstr "שם משתמש 019"
+
+#: admin/class-wp-otp-admin-fields.php:118
+msgid "YourBrand"
+msgstr "המותג שלך"

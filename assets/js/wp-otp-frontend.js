@@ -1,6 +1,7 @@
 jQuery(function ($) {
   let cooldownSeconds = parseInt(wpOtpFrontend.cooldown);
   let isCooldown = false;
+  let iti = null;
 
   const selectors = {
     form: $("#wp-otp-request-form"),
@@ -52,7 +53,7 @@ jQuery(function ($) {
         }
       },
       error: function () {
-        alert("An error occurred.");
+        alert(wpOtpFrontend.errorOccured);
         if (onError) onError();
       },
     });
@@ -61,10 +62,8 @@ jQuery(function ($) {
   function startCooldown() {
     let timeLeft = cooldownSeconds;
     isCooldown = true;
-
     selectors.resendBtn.prop("disabled", true);
     selectors.cooldownTimer.text(`${timeLeft}s`);
-
     const timer = setInterval(() => {
       timeLeft--;
       selectors.cooldownTimer.text(`${timeLeft}s`);
@@ -79,19 +78,31 @@ jQuery(function ($) {
 
   function handleFormSubmit(e) {
     e.preventDefault();
-
     if (isCooldown) {
-      alert("Please wait until the cooldown finishes.");
+      alert(wpOtpFrontend.cooldownMessage);
       return;
     }
 
     selectors.channelSection.removeClass("d-flex").hide();
 
+    let contactVal = "";
+
+    if (getSelectedChannel()?.toLowerCase() === "sms" && iti) {
+      contactVal = iti.getNumber();
+    } else {
+      contactVal = $("#otp_email").val();
+    }
+
+    if (!contactVal) {
+      alert(wpOtpFrontend.contactInfoRequired);
+      return;
+    }
+
     ajaxRequest({
       action: "wp_otp_send_otp",
       data: {
         channel: getSelectedChannel(),
-        contact: selectors.contactInput.val(),
+        contact: contactVal,
       },
       onSuccess: () => {
         toggleSections({ initial: false, verification: true });
@@ -101,22 +112,50 @@ jQuery(function ($) {
   }
 
   function handleVerifyClick() {
+    const channel = getSelectedChannel()?.toLowerCase();
+    const actionType = wpOtpFrontend.actionType || "login";
+
+    let contact = "";
+    if (channel === "sms" && iti) {
+      contact = iti.getNumber();
+    } else {
+      contact = $("#otp_email").val();
+    }
+
     ajaxRequest({
-      action: "wp_otp_verify_otp",
+      action: "wp_otp_process_user",
       data: {
-        contact: selectors.contactInput.val(),
+        contact: contact,
         otp: selectors.otpInput.val(),
-        channel: getSelectedChannel(),
+        actionType: actionType,
+        channel: channel,
       },
       onSuccess: (response) => {
-        alert(response.data.message);
-        location.reload();
+        if (response?.data?.message) {
+          alert(response.data.message);
+        } else {
+          alert("No message returned from server.");
+        }
+        if (response?.data?.redirect) {
+          window.location.href = response.data.redirect;
+        }
+      },
+      onError: (xhr) => {
+        const message =
+          xhr?.responseJSON?.data?.message ||
+          xhr?.statusText ||
+          "Unknown error.";
+        alert("AJAX error: " + message);
       },
     });
   }
 
   function handleChangeContact() {
-    toggleSections({ initial: true, verification: false, channel: true });
+    toggleSections({
+      initial: true,
+      verification: false,
+      channel: true,
+    });
   }
 
   function handleResendClick() {
@@ -125,12 +164,60 @@ jQuery(function ($) {
 
   function handleChannelChange() {
     const channel = getSelectedChannel()?.toLowerCase();
+
+    $("#otp_phone, #otp_email").hide();
+
     if (channel === "sms") {
-      selectors.otpContactLabel.text("Phone Number:");
+      selectors.otpContactLabel.text(wpOtpFrontend.phoneNumber);
+
+      $("#otp_phone").show().attr("placeholder", "e.g. 501234567");
+      $("#otp_email").val(""); // clear email field
+
+      if (!iti) {
+        iti = window.intlTelInput(document.querySelector("#otp_phone"), {
+          initialCountry: "il",
+          separateDialCode: true,
+          utilsScript:
+            "https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/utils.js",
+        });
+      }
+
+      $("#otp_phone")
+        .off("input")
+        .on("input", function () {
+          const raw = this.value.replace(/[^\d]/g, "");
+          let minLength = 9;
+          let maxLength = 9;
+
+          let truncated = raw.slice(0, maxLength);
+          this.value = truncated;
+
+          if (truncated.length < minLength) {
+            this.setCustomValidity(
+              wpOtpFrontend.phoneLength.replace("%d", minLength)
+            );
+          } else if (!truncated.startsWith("5")) {
+            this.setCustomValidity(wpOtpFrontend.phoneStartsWith5);
+          } else {
+            this.setCustomValidity("");
+          }
+
+          this.reportValidity();
+        });
     } else {
-      selectors.otpContactLabel.text("Email Address:");
+      selectors.otpContactLabel.text(wpOtpFrontend.emailAddress);
+
+      $("#otp_email").show().attr("placeholder", "you@example.com");
+      $("#otp_phone").val(""); // clear phone field
+
+      if (iti) {
+        iti.destroy();
+        iti = null;
+      }
     }
   }
+
+  handleChannelChange();
 
   // Event Bindings
   selectors.form.on("submit", handleFormSubmit);

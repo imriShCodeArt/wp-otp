@@ -13,7 +13,7 @@
                     <input id="<?php echo esc_attr($id); ?>" class="form-check-input" type="radio" name="otp_channel"
                         value="<?php echo esc_attr($channel); ?>" <?php echo $is_checked; ?> />
                     <label class="form-check-label" for="<?php echo esc_attr($id); ?>">
-                        <?php echo esc_html(ucfirst($channel)); ?>
+                        <?php echo esc_html__(ucfirst($channel), 'wp-otp'); ?>
                     </label>
                 </div>
             <?php endforeach; ?>

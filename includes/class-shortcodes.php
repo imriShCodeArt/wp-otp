@@ -15,6 +15,7 @@ class WP_OTP_Shortcodes
         $this->manager = new WP_OTP_Manager();
 
         add_shortcode('wp_otp_request', [$this, 'render_request_form']);
+        add_shortcode('wp_otp_form', [$this, 'render_request_form']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_wp_otp_request', [$this, 'handle_otp_request']);
         add_action('wp_ajax_nopriv_wp_otp_request', [$this, 'handle_otp_request']);
@@ -50,6 +51,10 @@ class WP_OTP_Shortcodes
                 true
             );
 
+            wp_enqueue_script('intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/js/intlTelInput.min.js', [], null, true);
+            wp_enqueue_style('intl-tel-input', 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.5.7/build/css/intlTelInput.min.css');
+
+
             wp_localize_script(
                 'wp-otp-frontend',
                 'wpOtpFrontend',
@@ -57,6 +62,15 @@ class WP_OTP_Shortcodes
                     'ajaxUrl' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('wp_otp_nonce'),
                     'cooldown' => wp_otp_get_settings()['otp_cooldown'] ?? 30,
+                    'phoneNumber' => __('Phone Number:', 'wp-otp'),
+                    'emailAddress' => __('Email Address:', 'wp-otp'),
+                    'phoneNumberInvalid' => __('Please enter a valid phone number.', 'wp-otp'),
+                    'emailInvalid' => __('Please enter a valid email address.', 'wp-otp'),
+                    'cooldownMessage' => __('Please wait until the cooldown finishes.', 'wp-otp'),
+                    'phoneLength' => __('Phone number must be exactly %d digits.', 'wp-otp'),
+                    'phoneStartsWith5' => __('Phone number must start with digit 5.', 'wp-otp'),
+                    'contactInfoRequired' => __('Contact information is required.', 'wp-otp'),
+                    'errorOccured' => __('An error occurred.', 'wp-otp'),
                 ]
             );
         }

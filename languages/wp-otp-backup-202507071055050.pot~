@@ -10,10 +10,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-07-07 10:55+0000\n"
+"POT-Creation-Date: 2025-07-07 10:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: Loco https://localise.biz/\n"
 "X-Domain: wp-otp\n"
+"\n"
 "Language: \n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;"
 
@@ -47,10 +48,6 @@ msgstr ""
 
 #: admin/views/logs-tab.php:25 admin/views/logs-tab.php:34
 msgid "All"
-msgstr ""
-
-#: includes/class-shortcodes.php:72
-msgid "An error occurred."
 msgstr ""
 
 #: admin/class-wp-otp-admin-fields.php:285
@@ -93,7 +90,7 @@ msgstr ""
 msgid "Contact"
 msgstr ""
 
-#: admin/class-admin-ajax.php:39 includes/class-shortcodes.php:71
+#: admin/class-admin-ajax.php:39
 msgid "Contact information is required."
 msgstr ""
 
@@ -270,7 +267,7 @@ msgstr ""
 msgid "OTP Logs"
 msgstr ""
 
-#: includes/class-shortcodes.php:89
+#: includes/class-shortcodes.php:87
 msgid "OTP request form template not found."
 msgstr ""
 
@@ -318,7 +315,7 @@ msgstr ""
 msgid "Please enter a valid email address."
 msgstr ""
 
-#: includes/class-shortcodes.php:105
+#: includes/class-shortcodes.php:103
 msgid "Please enter a valid email or phone number."
 msgstr ""
 
