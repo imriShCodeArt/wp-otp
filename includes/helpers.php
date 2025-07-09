@@ -73,7 +73,6 @@ function wp_otp_cleanup_expired_codes()
     );
 }
 
-
 /**
  * Run on plugin activation. Creates DB tables and default options.
  *
@@ -176,57 +175,6 @@ function wp_otp_register_default_strings()
 }
 
 /**
-<<<<<<< Updated upstream
- * Register WPML strings whenever plugin settings are saved.
-=======
-<<<<<<< Updated upstream
- * Delete expired OTP codes.
-=======
- * Initialize the plugin.
- */
-function wp_otp_init()
-{
-    // Always load core classes
-    if (class_exists(WP_OTP_Manager::class)) {
-        new WP_OTP_Manager();
-    }
-    if (class_exists(WP_OTP_Auth_Overrides::class)) {
-        new WP_OTP_Auth_Overrides();
-    }
-
-    // Load frontend or shared classes
-    if (class_exists(WP_OTP_Shortcodes::class)) {
-        new WP_OTP_Shortcodes();
-    }
-
-    // Admin classes
-    if (is_admin()) {
-        if (class_exists(WP_OTP_Admin_Page::class)) {
-            new WP_OTP_Admin_Page();
-        }
-        if (class_exists(WP_OTP_Admin_Fields::class)) {
-            new WP_OTP_Admin_Fields();
-        }
-        if (class_exists(WP_OTP_Admin_Ajax::class)) {
-            new WP_OTP_Admin_Ajax();
-        }
-    }
-}
-
-/**
- * Register WPML/Polylang strings on admin_init for default settings.
- */
-function wp_otp_register_default_strings()
-{
-    $defaults = wp_otp_default_settings();
-
-    foreach (wp_otp_get_translatable_keys() as $key => $label) {
-        $value = $defaults[$key] ?? '';
-        do_action('wpml_register_single_string', 'WP OTP', $label, $value);
-    }
-}
-
-/**
  * Register WPML strings whenever plugin settings are saved.
  */
 function wp_otp_register_updated_strings($new_value)
@@ -241,28 +189,6 @@ function wp_otp_register_updated_strings($new_value)
         }
     }
 }
-
-<<<<<<< Updated upstream
-/**
- * Returns keys/labels for all strings that should be translatable.
->>>>>>> Stashed changes
- *
- * @return int
->>>>>>> Stashed changes
- */
-function wp_otp_register_updated_strings($new_value)
-{
-    if (empty($new_value) || !is_array($new_value)) {
-        return;
-    }
-
-    foreach (wp_otp_get_translatable_keys() as $key => $label) {
-        if (!empty($new_value[$key])) {
-            do_action('wpml_register_single_string', 'WP OTP', $label, $new_value[$key]);
-        }
-    }
-}
-<<<<<<< Updated upstream
 
 /**
  * Returns keys/labels for all strings that should be translatable.
@@ -276,14 +202,11 @@ function wp_otp_get_translatable_keys()
         'email_body' => 'Email Body',
         'sms_sender' => 'SMS Sender',
         'sms_message' => 'SMS Message',
-        'sms_api_key' => 'SMS API Key',
-        'sms_api_secret' => 'SMS API Secret',
+        'sms_username' => 'SMS API Username',
+        'sms_password' => 'SMS API Password',
+        'sms_access_token' => 'SMS API Access Token',
     ];
 }
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 
 /**
  * Optional migration: ensures all new default keys exist in saved options.
@@ -303,116 +226,6 @@ function wp_otp_deactivate()
 {
     // Place deactivation logic here if needed
 }
-
-// /**
-//  * Insert a new OTP record into wp_otp_codes.
-//  *
-//  * @param string $contact
-//  * @param string $code_hash
-//  * @param string $expires_at
-//  * @return int|false
-//  */
-// function wp_otp_insert_code($contact, $code_hash, $expires_at)
-// {
-//     global $wpdb;
-
-//     $table = $wpdb->prefix . 'otp_codes';
-
-//     $result = $wpdb->insert(
-//         $table,
-//         [
-//             'contact' => $contact,
-//             'code_hash' => $code_hash,
-//             'expires_at' => $expires_at,
-//             'attempts' => 0,
-//             'status' => 'pending',
-//             'created_at' => current_time('mysql', 1),
-//         ],
-//         [
-//             '%s',
-//             '%s',
-//             '%s',
-//             '%d',
-//             '%s',
-//             '%s',
-//         ]
-//     );
-
-//     return ($result === false) ? false : $wpdb->insert_id;
-// }
-
-// /**
-//  * Update an OTP record by contact.
-//  *
-//  * @param string $contact
-//  * @param array  $data
-//  * @return int|false
-//  */
-// function wp_otp_update_code($contact, $data)
-// {
-//     global $wpdb;
-
-//     $table = $wpdb->prefix . 'otp_codes';
-
-//     if (empty($data)) {
-//         return false;
-//     }
-
-//     $format = [];
-//     foreach ($data as $key => $value) {
-//         switch ($key) {
-//             case 'attempts':
-//                 $format[] = '%d';
-//                 break;
-//             case 'expires_at':
-//             case 'created_at':
-//                 $format[] = '%s';
-//                 break;
-//             case 'status':
-//             case 'code_hash':
-//                 $format[] = '%s';
-//                 break;
-//             default:
-//                 $format[] = '%s';
-//                 break;
-//         }
-//     }
-
-//     $result = $wpdb->update(
-//         $table,
-//         $data,
-//         ['contact' => $contact],
-//         $format,
-//         ['%s']
-//     );
-
-//     return ($result === false) ? false : $result;
-// }
-
-// /**
-//  * Retrieve an OTP record for a given contact.
-//  *
-//  * @param string $contact
-//  * @return object|null
-//  */
-// function wp_otp_get_code($contact)
-// {
-//     global $wpdb;
-
-//     $table = $wpdb->prefix . 'otp_codes';
-
-//     return $wpdb->get_row(
-//         $wpdb->prepare(
-//             "SELECT * FROM $table WHERE contact = %s LIMIT 1",
-//             $contact
-//         )
-//     );
-<<<<<<< Updated upstream
-// }
-=======
-// }
-=======
-
 
 /**
  * Plugin uninstall function.
@@ -442,8 +255,3 @@ function wp_otp_uninstall()
     // Remove user meta related to OTP
     $wpdb->query("DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'wp_otp_%'");
 }
-
-
->>>>>>> Stashed changes
->>>>>>> Stashed changes
->>>>>>> Stashed changes
