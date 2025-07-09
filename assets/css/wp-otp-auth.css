@@ -1,0 +1,391 @@
+/**
+ * WP OTP Authentication Styles
+ * 
+ * Modern, responsive styles for the OTP-based authentication system.
+ */
+
+/* Container and Layout */
+.wp-otp-auth-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.wp-otp-auth-form {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 40px 30px;
+    margin-bottom: 20px;
+}
+
+/* Header */
+.wp-otp-auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.wp-otp-auth-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 8px 0;
+}
+
+.wp-otp-auth-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+/* Form Groups */
+.wp-otp-form-group {
+    margin-bottom: 20px;
+}
+
+.wp-otp-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+/* Input Fields */
+.wp-otp-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.wp-otp-input:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1);
+}
+
+.wp-otp-input.wp-otp-otp-input {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+/* Radio Buttons */
+.wp-otp-channel-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.wp-otp-radio {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.wp-otp-radio input[type="radio"] {
+    margin: 0 8px 0 0;
+    cursor: pointer;
+}
+
+.wp-otp-radio-text {
+    color: #333;
+}
+
+/* Buttons */
+.wp-otp-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.wp-otp-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.wp-otp-btn-primary {
+    background: #007cba;
+    color: white;
+}
+
+.wp-otp-btn-primary:hover:not(:disabled) {
+    background: #005a87;
+    transform: translateY(-1px);
+}
+
+.wp-otp-btn-secondary {
+    background: #f8f9fa;
+    color: #333;
+    border: 2px solid #e1e5e9;
+}
+
+.wp-otp-btn-secondary:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.wp-otp-btn-link {
+    background: none;
+    color: #007cba;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.wp-otp-btn-link:hover:not(:disabled) {
+    color: #005a87;
+    text-decoration: underline;
+}
+
+/* Form Actions */
+.wp-otp-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.wp-otp-form-actions .wp-otp-btn {
+    flex: 1;
+}
+
+/* Steps */
+.wp-otp-step {
+    display: none;
+}
+
+.wp-otp-step.active {
+    display: block;
+}
+
+/* Resend Section */
+.wp-otp-resend-section {
+    margin-top: 20px;
+    text-align: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.wp-otp-resend-text {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.wp-otp-resend-timer {
+    display: block;
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* Messages */
+.wp-otp-message {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: none;
+}
+
+.wp-otp-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+.wp-otp-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+.wp-otp-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    display: block;
+}
+
+/* Error Messages */
+.wp-otp-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+}
+
+.wp-otp-error.show {
+    display: block;
+}
+
+.wp-otp-error-container {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+}
+
+.wp-otp-error-message {
+    color: #721c24;
+    font-size: 14px;
+}
+
+.wp-otp-success-container {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+}
+
+.wp-otp-success-message {
+    color: #155724;
+    font-size: 14px;
+}
+
+/* Loading State */
+.wp-otp-loading {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.wp-otp-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007cba;
+    border-radius: 50%;
+    animation: wp-otp-spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes wp-otp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.wp-otp-loading p {
+    color: #666;
+    margin: 0;
+}
+
+/* Footer */
+.wp-otp-auth-footer {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.wp-otp-auth-footer a {
+    color: #007cba;
+    text-decoration: none;
+}
+
+.wp-otp-auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .wp-otp-auth-container {
+        padding: 10px;
+    }
+    
+    .wp-otp-auth-form {
+        padding: 30px 20px;
+    }
+    
+    .wp-otp-form-actions {
+        flex-direction: column;
+    }
+    
+    .wp-otp-channel-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* WordPress Login Page Integration */
+.login form {
+    display: none;
+}
+
+.login .wp-otp-auth-container {
+    margin-top: 20px;
+}
+
+/* Custom WordPress Login Page Styling */
+body.login {
+    background: #f0f0f1;
+}
+
+.login h1 a {
+    display: none;
+}
+
+.login #backtoblog,
+.login #nav {
+    display: none;
+}
+
+/* Animation for step transitions */
+.wp-otp-step {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.wp-otp-step.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Focus states for accessibility */
+.wp-otp-input:focus,
+.wp-otp-btn:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .wp-otp-input {
+        border-width: 3px;
+    }
+    
+    .wp-otp-btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .wp-otp-step,
+    .wp-otp-btn,
+    .wp-otp-input {
+        transition: none;
+    }
+    
+    .wp-otp-spinner {
+        animation: none;
+    }
+} 
