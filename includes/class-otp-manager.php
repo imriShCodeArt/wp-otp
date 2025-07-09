@@ -183,7 +183,7 @@ class WP_OTP_Manager
             ];
         }
 
-        if ($row->status !== 'pending') {
+        if ($row->status !== WP_OTP_Repository::STATUS_PENDING) {
             $this->logger->log('verify_failed', $contact, "OTP already {$row->status}.", null, get_current_user_id());
             return [
                 'success' => false,
@@ -193,7 +193,7 @@ class WP_OTP_Manager
         }
 
         if (strtotime($row->expires_at) < time()) {
-            $this->repository->update_status($contact, 'expired');
+            $this->repository->update_status($contact, WP_OTP_Repository::STATUS_EXPIRED);
             $this->logger->log('verify_failed', $contact, "OTP expired at {$row->expires_at}.", null, get_current_user_id());
             return [
                 'success' => false,
@@ -203,7 +203,7 @@ class WP_OTP_Manager
         }
 
         if ($row->attempts >= $max_attempts) {
-            $this->repository->update_status($contact, 'expired');
+            $this->repository->update_status($contact, WP_OTP_Repository::STATUS_EXPIRED);
             $this->logger->log('verify_failed', $contact, "Maximum attempts reached. OTP expired.", null, get_current_user_id());
             return [
                 'success' => false,
@@ -215,7 +215,7 @@ class WP_OTP_Manager
         $is_valid = password_verify($input_otp, $row->code_hash);
 
         if ($is_valid) {
-            $this->repository->update_status($contact, 'verified');
+            $this->repository->update_status($contact, WP_OTP_Repository::STATUS_VERIFIED);
             $this->logger->log('verify_success', $contact, "OTP verified successfully.", null, get_current_user_id());
             return [
                 'success' => true,
