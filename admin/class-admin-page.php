@@ -308,43 +308,49 @@ class WP_OTP_Admin_Page
      */
     public function render_logs_tab()
     {
-        global $wpdb;
+        // Get logger instance
+        $logger = new \WpOtp\WP_OTP_Logger();
+        
+        // Build filter arguments
+        $filter_args = [
+            'limit' => 100,
+            'orderby' => 'created_at',
+            'order' => 'DESC',
+        ];
 
-        $table = $wpdb->prefix . 'otp_logs';
-
-        $sql = "SELECT * FROM $table WHERE 1=1";
-        $values = [];
-
+        // Date filters
         if (!empty($_GET['from_date'])) {
-            $sql .= " AND created_at >= %s";
-            $values[] = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+            $from_date = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+            $filter_args['from_date'] = $from_date;
         }
 
         if (!empty($_GET['to_date'])) {
-            $sql .= " AND created_at <= %s";
-            $values[] = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+            $to_date = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+            $filter_args['to_date'] = $to_date;
         }
 
+        // Contact filter
         if (!empty($_GET['contact'])) {
-            $sql .= " AND contact LIKE %s";
-            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['contact'])) . '%';
+            $filter_args['contact'] = sanitize_text_field($_GET['contact']);
         }
 
+        // Channel filter
         if (!empty($_GET['channel'])) {
-            $channel = sanitize_text_field($_GET['channel']);
-            // channel filter is inferred from event_type
-            $sql .= " AND event_type LIKE %s";
-            $values[] = '%' . $wpdb->esc_like($channel) . '%';
+            $filter_args['channel'] = sanitize_text_field($_GET['channel']);
         }
 
+        // Event type filter
         if (!empty($_GET['event_type'])) {
-            $sql .= " AND event_type = %s";
-            $values[] = sanitize_text_field($_GET['event_type']);
+            $event_types = is_array($_GET['event_type']) ? $_GET['event_type'] : [$_GET['event_type']];
+            $event_types = array_map('sanitize_text_field', $event_types);
+            $filter_args['event_types'] = $event_types;
         }
 
-        $sql .= " ORDER BY created_at DESC LIMIT 100";
+        // Get logs using the logger's get_logs method
+        $logs = $logger->get_logs($filter_args);
 
-        $logs = $wpdb->get_results($wpdb->prepare($sql, ...$values));
+        // Get statistics for display
+        $stats = $logger->get_statistics();
 
         include WP_OTP_PATH . 'admin/views/logs-tab.php';
     }
@@ -358,42 +364,46 @@ class WP_OTP_Admin_Page
             wp_die(__('Cannot export CSV: headers already sent.', 'wp-otp'));
         }
 
-        global $wpdb;
+        // Get logger instance
+        $logger = new \WpOtp\WP_OTP_Logger();
+        
+        // Build filter arguments
+        $filter_args = [
+            'limit' => 10000, // Higher limit for CSV export
+            'orderby' => 'created_at',
+            'order' => 'DESC',
+        ];
 
-        $table = $wpdb->prefix . 'otp_logs';
-
-        $sql = "SELECT * FROM $table WHERE 1=1";
-        $values = [];
-
+        // Date filters
         if (!empty($_GET['from_date'])) {
-            $sql .= " AND created_at >= %s";
-            $values[] = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+            $from_date = sanitize_text_field($_GET['from_date']) . ' 00:00:00';
+            $filter_args['from_date'] = $from_date;
         }
 
         if (!empty($_GET['to_date'])) {
-            $sql .= " AND created_at <= %s";
-            $values[] = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+            $to_date = sanitize_text_field($_GET['to_date']) . ' 23:59:59';
+            $filter_args['to_date'] = $to_date;
         }
 
+        // Contact filter
         if (!empty($_GET['contact'])) {
-            $sql .= " AND contact LIKE %s";
-            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['contact'])) . '%';
+            $filter_args['contact'] = sanitize_text_field($_GET['contact']);
         }
 
+        // Channel filter
         if (!empty($_GET['channel'])) {
-            $sql .= " AND event_type LIKE %s";
-            $values[] = '%' . $wpdb->esc_like(sanitize_text_field($_GET['channel'])) . '%';
+            $filter_args['channel'] = sanitize_text_field($_GET['channel']);
         }
 
+        // Event type filter
         if (!empty($_GET['event_type'])) {
-            $sql .= " AND event_type = %s";
-            $values[] = sanitize_text_field($_GET['event_type']);
+            $event_types = is_array($_GET['event_type']) ? $_GET['event_type'] : [$_GET['event_type']];
+            $event_types = array_map('sanitize_text_field', $event_types);
+            $filter_args['event_types'] = $event_types;
         }
 
-        $sql .= " ORDER BY created_at DESC";
-
-        $query = $values ? $wpdb->prepare($sql, ...$values) : $sql;
-        $logs = $wpdb->get_results($query);
+        // Get logs using the logger's get_logs method
+        $logs = $logger->get_logs($filter_args);
 
         if (empty($logs)) {
             wp_die(__('No logs found for export.', 'wp-otp'));
@@ -410,13 +420,15 @@ class WP_OTP_Admin_Page
         $output = fopen('php://output', 'w');
 
         // CSV header
-        fputcsv($output, ['ID', 'Event Type', 'Contact', 'Message', 'Created At']);
+        fputcsv($output, ['ID', 'Event Type', 'Contact', 'Channel', 'User ID', 'Message', 'Created At']);
 
         foreach ($logs as $log) {
             fputcsv($output, [
                 $log->id,
                 $log->event_type,
                 $log->contact,
+                $log->channel,
+                $log->user_id,
                 $log->message,
                 $log->created_at,
             ]);

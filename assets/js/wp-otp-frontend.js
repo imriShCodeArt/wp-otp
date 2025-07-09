@@ -12,7 +12,7 @@ jQuery(function ($) {
     cooldownTimer: $("#wp-otp-cooldown-timer"),
     changeContactBtn: $("#wp-otp-change-contact-btn"),
     otpInput: $("#wp_otp_input"),
-    contactInput: $("#otp_contact"),
+    contactInputs: $("#otp_phone, #otp_email"),
     nonceInput: $('input[name="nonce"]'),
     otpChannelInputs: $('input[name="otp_channel"]'),
     otpContactLabel: $("#otp_contact_label"),
@@ -49,10 +49,12 @@ jQuery(function ($) {
         if (response.success) {
           onSuccess(response);
         } else {
-          alert(response.data.message);
+          console.log("AJAX FAILURE", response);
+          alert(response.data?.message || "Verification failed.");
         }
       },
-      error: function () {
+      error: function (jqXHR, textStatus, errorThrown) {
+        console.log("AJAX ERROR", jqXHR.responseText, textStatus, errorThrown);
         alert(wpOtpFrontend.errorOccured);
         if (onError) onError();
       },
@@ -112,40 +114,28 @@ jQuery(function ($) {
   }
 
   function handleVerifyClick() {
-    const channel = getSelectedChannel()?.toLowerCase();
-    const actionType = wpOtpFrontend.actionType || "login";
+    let contactVal = "";
 
-    let contact = "";
-    if (channel === "sms" && iti) {
-      contact = iti.getNumber();
+    if (getSelectedChannel()?.toLowerCase() === "sms" && iti) {
+      contactVal = iti.getNumber();
     } else {
-      contact = $("#otp_email").val();
+      contactVal = $("#otp_email").val();
     }
 
+    console.log("CONTACT:", contactVal);
+    console.log("OTP:", selectors.otpInput.val());
+    console.log("CHANNEL:", getSelectedChannel());
+
     ajaxRequest({
-      action: "wp_otp_process_user",
+      action: "wp_otp_verify_otp",
       data: {
-        contact: contact,
+        contact: contactVal,
         otp: selectors.otpInput.val(),
-        actionType: actionType,
-        channel: channel,
+        channel: getSelectedChannel(),
       },
       onSuccess: (response) => {
-        if (response?.data?.message) {
-          alert(response.data.message);
-        } else {
-          alert("No message returned from server.");
-        }
-        if (response?.data?.redirect) {
-          window.location.href = response.data.redirect;
-        }
-      },
-      onError: (xhr) => {
-        const message =
-          xhr?.responseJSON?.data?.message ||
-          xhr?.statusText ||
-          "Unknown error.";
-        alert("AJAX error: " + message);
+        alert(response.data.message);
+        location.reload();
       },
     });
   }
