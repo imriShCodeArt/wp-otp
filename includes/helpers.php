@@ -73,7 +73,6 @@ function wp_otp_cleanup_expired_codes()
     );
 }
 
-
 /**
  * Run on plugin activation. Creates DB tables and default options.
  *
@@ -203,8 +202,9 @@ function wp_otp_get_translatable_keys()
         'email_body' => 'Email Body',
         'sms_sender' => 'SMS Sender',
         'sms_message' => 'SMS Message',
-        'sms_api_key' => 'SMS API Key',
-        'sms_api_secret' => 'SMS API Secret',
+        'sms_username' => 'SMS API Username',
+        'sms_password' => 'SMS API Password',
+        'sms_access_token' => 'SMS API Access Token',
     ];
 }
 
@@ -227,107 +227,31 @@ function wp_otp_deactivate()
     // Place deactivation logic here if needed
 }
 
-// /**
-//  * Insert a new OTP record into wp_otp_codes.
-//  *
-//  * @param string $contact
-//  * @param string $code_hash
-//  * @param string $expires_at
-//  * @return int|false
-//  */
-// function wp_otp_insert_code($contact, $code_hash, $expires_at)
-// {
-//     global $wpdb;
+/**
+ * Plugin uninstall function.
+ * 
+ * This function is called when the plugin is uninstalled.
+ * It cleans up all plugin data from the database.
+ */
+function wp_otp_uninstall()
+{
+    // Remove plugin options
+    delete_option('wp_otp_settings');
 
-//     $table = $wpdb->prefix . 'otp_codes';
+    // Drop custom OTP tables
+    global $wpdb;
+    
+    // Drop OTP codes table
+    $codes_table = esc_sql($wpdb->prefix . 'otp_codes');
+    $wpdb->query("DROP TABLE IF EXISTS `$codes_table`");
 
-//     $result = $wpdb->insert(
-//         $table,
-//         [
-//             'contact' => $contact,
-//             'code_hash' => $code_hash,
-//             'expires_at' => $expires_at,
-//             'attempts' => 0,
-//             'status' => 'pending',
-//             'created_at' => current_time('mysql', 1),
-//         ],
-//         [
-//             '%s',
-//             '%s',
-//             '%s',
-//             '%d',
-//             '%s',
-//             '%s',
-//         ]
-//     );
+    // Drop OTP logs table
+    $logs_table = esc_sql($wpdb->prefix . 'otp_logs');
+    $wpdb->query("DROP TABLE IF EXISTS `$logs_table`");
 
-//     return ($result === false) ? false : $wpdb->insert_id;
-// }
+    // Clear any scheduled events
+    wp_clear_scheduled_hook('wp_otp_cleanup_expired_codes');
 
-// /**
-//  * Update an OTP record by contact.
-//  *
-//  * @param string $contact
-//  * @param array  $data
-//  * @return int|false
-//  */
-// function wp_otp_update_code($contact, $data)
-// {
-//     global $wpdb;
-
-//     $table = $wpdb->prefix . 'otp_codes';
-
-//     if (empty($data)) {
-//         return false;
-//     }
-
-//     $format = [];
-//     foreach ($data as $key => $value) {
-//         switch ($key) {
-//             case 'attempts':
-//                 $format[] = '%d';
-//                 break;
-//             case 'expires_at':
-//             case 'created_at':
-//                 $format[] = '%s';
-//                 break;
-//             case 'status':
-//             case 'code_hash':
-//                 $format[] = '%s';
-//                 break;
-//             default:
-//                 $format[] = '%s';
-//                 break;
-//         }
-//     }
-
-//     $result = $wpdb->update(
-//         $table,
-//         $data,
-//         ['contact' => $contact],
-//         $format,
-//         ['%s']
-//     );
-
-//     return ($result === false) ? false : $result;
-// }
-
-// /**
-//  * Retrieve an OTP record for a given contact.
-//  *
-//  * @param string $contact
-//  * @return object|null
-//  */
-// function wp_otp_get_code($contact)
-// {
-//     global $wpdb;
-
-//     $table = $wpdb->prefix . 'otp_codes';
-
-//     return $wpdb->get_row(
-//         $wpdb->prepare(
-//             "SELECT * FROM $table WHERE contact = %s LIMIT 1",
-//             $contact
-//         )
-//     );
-// }
+    // Remove user meta related to OTP
+    $wpdb->query("DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'wp_otp_%'");
+}
