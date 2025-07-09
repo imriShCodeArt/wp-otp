@@ -20,8 +20,11 @@ class WP_OTP_Admin_Ajax
         add_action('wp_ajax_wp_otp_send_otp', [$this, 'wp_otp_send_otp']);
         add_action('wp_ajax_nopriv_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
         add_action('wp_ajax_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
-        add_action('wp_ajax_nopriv_wp_otp_process_user', [$this, 'wp_otp_process_user']);
-        add_action('wp_ajax_wp_otp_process_user', [$this, 'wp_otp_process_user']);
+        
+        // Log deletion handlers
+        add_action('wp_ajax_wp_otp_delete_log', [$this, 'delete_log']);
+        add_action('wp_ajax_wp_otp_delete_logs', [$this, 'delete_logs']);
+        add_action('wp_ajax_wp_otp_delete_all_logs', [$this, 'delete_all_logs']);
     }
 
     /**
@@ -166,6 +169,142 @@ class WP_OTP_Admin_Ajax
         wp_send_json_success([
             'message' => __('Settings saved successfully.', 'wp-otp')
         ]);
+    }
+
+    /**
+     * Delete a single log.
+     */
+    public function delete_log()
+    {
+        check_ajax_referer('wp_otp_logs_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error([
+                'message' => __('You do not have permission to perform this action.', 'wp-otp')
+            ]);
+        }
+
+        $log_id = intval($_POST['log_id'] ?? 0);
+
+        if (!$log_id) {
+            wp_send_json_error([
+                'message' => __('Invalid log ID.', 'wp-otp')
+            ]);
+        }
+
+        $logger = new \WpOtp\WP_OTP_Logger();
+        $result = $logger->delete_log($log_id);
+
+        if ($result) {
+            wp_send_json_success([
+                'message' => __('Log deleted successfully.', 'wp-otp')
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => __('Failed to delete log.', 'wp-otp')
+            ]);
+        }
+    }
+
+    /**
+     * Delete multiple logs.
+     */
+    public function delete_logs()
+    {
+        check_ajax_referer('wp_otp_logs_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error([
+                'message' => __('You do not have permission to perform this action.', 'wp-otp')
+            ]);
+        }
+
+        $log_ids = $_POST['log_ids'] ?? [];
+
+        if (empty($log_ids) || !is_array($log_ids)) {
+            wp_send_json_error([
+                'message' => __('No logs selected for deletion.', 'wp-otp')
+            ]);
+        }
+
+        $logger = new \WpOtp\WP_OTP_Logger();
+        $deleted_count = $logger->delete_logs($log_ids);
+
+        if ($deleted_count > 0) {
+            wp_send_json_success([
+                'message' => sprintf(
+                    _n(
+                        '%d log deleted successfully.',
+                        '%d logs deleted successfully.',
+                        $deleted_count,
+                        'wp-otp'
+                    ),
+                    $deleted_count
+                )
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => __('Failed to delete logs.', 'wp-otp')
+            ]);
+        }
+    }
+
+    /**
+     * Delete all logs with optional filtering.
+     */
+    public function delete_all_logs()
+    {
+        check_ajax_referer('wp_otp_logs_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error([
+                'message' => __('You do not have permission to perform this action.', 'wp-otp')
+            ]);
+        }
+
+        // Build filter arguments from request
+        $filter_args = [];
+
+        if (!empty($_POST['from_date'])) {
+            $filter_args['from_date'] = sanitize_text_field($_POST['from_date']) . ' 00:00:00';
+        }
+
+        if (!empty($_POST['to_date'])) {
+            $filter_args['to_date'] = sanitize_text_field($_POST['to_date']) . ' 23:59:59';
+        }
+
+        if (!empty($_POST['contact'])) {
+            $filter_args['contact'] = sanitize_text_field($_POST['contact']);
+        }
+
+        if (!empty($_POST['channel'])) {
+            $filter_args['channel'] = sanitize_text_field($_POST['channel']);
+        }
+
+        if (!empty($_POST['event_types']) && is_array($_POST['event_types'])) {
+            $filter_args['event_types'] = array_map('sanitize_text_field', $_POST['event_types']);
+        }
+
+        $logger = new \WpOtp\WP_OTP_Logger();
+        $deleted_count = $logger->delete_all_logs($filter_args);
+
+        if ($deleted_count > 0) {
+            wp_send_json_success([
+                'message' => sprintf(
+                    _n(
+                        '%d log deleted successfully.',
+                        '%d logs deleted successfully.',
+                        $deleted_count,
+                        'wp-otp'
+                    ),
+                    $deleted_count
+                )
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => __('No logs found to delete.', 'wp-otp')
+            ]);
+        }
     }
 
     /**

@@ -336,4 +336,123 @@ class WP_OTP_Logger
 
         return $stats;
     }
+
+    /**
+     * Delete a single log by ID.
+     *
+     * @param int $log_id
+     * @return bool
+     */
+    public function delete_log($log_id)
+    {
+        global $wpdb;
+
+        $result = $wpdb->delete(
+            $this->table_name,
+            ['id' => $log_id],
+            ['%d']
+        );
+
+        return $result !== false;
+    }
+
+    /**
+     * Delete multiple logs by IDs.
+     *
+     * @param array $log_ids
+     * @return int Number of deleted records
+     */
+    public function delete_logs($log_ids)
+    {
+        if (empty($log_ids) || !is_array($log_ids)) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        $ids = array_map('intval', $log_ids);
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+        $result = $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$this->table_name} WHERE id IN ($placeholders)",
+                ...$ids
+            )
+        );
+
+        return $result !== false ? $result : 0;
+    }
+
+    /**
+     * Delete all logs with optional filtering.
+     *
+     * @param array $args Filter arguments (same as get_logs)
+     * @return int Number of deleted records
+     */
+    public function delete_all_logs($args = [])
+    {
+        global $wpdb;
+
+        $defaults = [
+            'event_type' => null,
+            'event_types' => null,
+            'contact' => null,
+            'channel' => null,
+            'user_id' => null,
+            'from_date' => null,
+            'to_date' => null,
+        ];
+
+        $args = wp_parse_args($args, $defaults);
+        $where_conditions = [];
+        $where_values = [];
+
+        if ($args['event_type']) {
+            $where_conditions[] = 'event_type = %s';
+            $where_values[] = $args['event_type'];
+        }
+
+        if ($args['event_types'] && is_array($args['event_types']) && !empty($args['event_types'])) {
+            $placeholders = array_fill(0, count($args['event_types']), '%s');
+            $where_conditions[] = 'event_type IN (' . implode(', ', $placeholders) . ')';
+            $where_values = array_merge($where_values, $args['event_types']);
+        }
+
+        if ($args['contact']) {
+            $where_conditions[] = 'contact LIKE %s';
+            $where_values[] = '%' . $wpdb->esc_like($args['contact']) . '%';
+        }
+
+        if ($args['channel']) {
+            $where_conditions[] = 'channel = %s';
+            $where_values[] = $args['channel'];
+        }
+
+        if ($args['user_id']) {
+            $where_conditions[] = 'user_id = %d';
+            $where_values[] = $args['user_id'];
+        }
+
+        if ($args['from_date']) {
+            $where_conditions[] = 'created_at >= %s';
+            $where_values[] = $args['from_date'];
+        }
+
+        if ($args['to_date']) {
+            $where_conditions[] = 'created_at <= %s';
+            $where_values[] = $args['to_date'];
+        }
+
+        $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
+
+        $sql = "DELETE FROM {$this->table_name} {$where_clause}";
+
+        if (!empty($where_values)) {
+            $sql = $wpdb->prepare($sql, ...$where_values);
+        }
+
+        $result = $wpdb->query($sql);
+
+        return $result !== false ? $result : 0;
+    }
 }

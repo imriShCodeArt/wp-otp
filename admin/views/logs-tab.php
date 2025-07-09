@@ -113,20 +113,45 @@
 <?php if (empty($logs)): ?>
     <p><?php esc_html_e('No logs found.', 'wp-otp'); ?></p>
 <?php else: ?>
+    <div class="wp-otp-logs-actions" style="margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="select-all-logs" class="button button-small">
+                <?php esc_html_e('Select All', 'wp-otp'); ?>
+            </button>
+            <button type="button" id="deselect-all-logs" class="button button-small">
+                <?php esc_html_e('Deselect All', 'wp-otp'); ?>
+            </button>
+            <button type="button" id="delete-selected-logs" class="button button-small button-link-delete" disabled>
+                <?php esc_html_e('Delete Selected', 'wp-otp'); ?>
+            </button>
+            <button type="button" id="delete-all-filtered-logs" class="button button-small button-link-delete">
+                <?php esc_html_e('Delete All Filtered', 'wp-otp'); ?>
+            </button>
+            <span id="selected-count" style="color: #666; font-size: 12px;"></span>
+        </div>
+    </div>
+
     <table class="widefat fixed striped">
         <thead>
             <tr>
+                <th style="width: 30px;">
+                    <input type="checkbox" id="select-all-checkbox">
+                </th>
                 <th><?php esc_html_e('Date', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Event Type', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Contact', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Channel', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('User ID', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Message', 'wp-otp'); ?></th>
+                <th style="width: 80px;"><?php esc_html_e('Actions', 'wp-otp'); ?></th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($logs as $log): ?>
-                <tr>
+                <tr data-log-id="<?php echo esc_attr($log->id); ?>">
+                    <td>
+                        <input type="checkbox" class="log-checkbox" value="<?php echo esc_attr($log->id); ?>">
+                    </td>
                     <td><?php echo esc_html($log->created_at); ?></td>
                     <td>
                         <span class="log-event-type log-event-type-<?php echo esc_attr($log->event_type); ?>">
@@ -137,6 +162,12 @@
                     <td><?php echo esc_html($log->channel ?? 'N/A'); ?></td>
                     <td><?php echo esc_html($log->user_id ?? 'N/A'); ?></td>
                     <td><?php echo esc_html($log->message); ?></td>
+                    <td>
+                        <button type="button" class="button button-small button-link-delete delete-single-log" 
+                                data-log-id="<?php echo esc_attr($log->id); ?>">
+                            <?php esc_html_e('Delete', 'wp-otp'); ?>
+                        </button>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
@@ -164,17 +195,15 @@
 
 <script>
 jQuery(document).ready(function($) {
-    // Select All functionality
+    // Event type multiselect functionality
     $('.select-all-events').on('click', function() {
         $('.event-type-multiselect input[type="checkbox"]').prop('checked', true);
     });
     
-    // Clear All functionality
     $('.clear-all-events').on('click', function() {
         $('.event-type-multiselect input[type="checkbox"]').prop('checked', false);
     });
     
-    // Update button states based on checkbox states
     function updateButtonStates() {
         var totalCheckboxes = $('.event-type-multiselect input[type="checkbox"]').length;
         var checkedCheckboxes = $('.event-type-multiselect input[type="checkbox"]:checked').length;
@@ -188,10 +217,193 @@ jQuery(document).ready(function($) {
         }
     }
     
-    // Update button states on checkbox change
     $('.event-type-multiselect input[type="checkbox"]').on('change', updateButtonStates);
-    
-    // Initialize button states
     updateButtonStates();
+
+    // Log deletion functionality
+    var nonce = '<?php echo wp_create_nonce('wp_otp_logs_nonce'); ?>';
+    var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+
+    // Select all logs
+    $('#select-all-logs').on('click', function() {
+        $('.log-checkbox').prop('checked', true);
+        updateLogSelection();
+    });
+
+    // Deselect all logs
+    $('#deselect-all-logs').on('click', function() {
+        $('.log-checkbox').prop('checked', false);
+        updateLogSelection();
+    });
+
+    // Select all checkbox in header
+    $('#select-all-checkbox').on('change', function() {
+        $('.log-checkbox').prop('checked', this.checked);
+        updateLogSelection();
+    });
+
+    // Individual log checkboxes
+    $(document).on('change', '.log-checkbox', function() {
+        updateLogSelection();
+    });
+
+    function updateLogSelection() {
+        var checkedBoxes = $('.log-checkbox:checked');
+        var totalBoxes = $('.log-checkbox').length;
+        
+        $('#selected-count').text(checkedBoxes.length + ' of ' + totalBoxes + ' selected');
+        
+        if (checkedBoxes.length > 0) {
+            $('#delete-selected-logs').prop('disabled', false);
+        } else {
+            $('#delete-selected-logs').prop('disabled', true);
+        }
+        
+        // Update header checkbox
+        if (checkedBoxes.length === totalBoxes) {
+            $('#select-all-checkbox').prop('checked', true);
+        } else {
+            $('#select-all-checkbox').prop('checked', false);
+        }
+    }
+
+    // Delete single log
+    $(document).on('click', '.delete-single-log', function() {
+        var logId = $(this).data('log-id');
+        var row = $(this).closest('tr');
+        
+        if (confirm('<?php echo esc_js(__('Are you sure you want to delete this log?', 'wp-otp')); ?>')) {
+            $.ajax({
+                url: ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'wp_otp_delete_log',
+                    nonce: nonce,
+                    log_id: logId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            updateLogSelection();
+                        });
+                        showMessage(response.data.message, 'success');
+                    } else {
+                        showMessage(response.data.message, 'error');
+                    }
+                },
+                error: function() {
+                    showMessage('<?php echo esc_js(__('An error occurred while deleting the log.', 'wp-otp')); ?>', 'error');
+                }
+            });
+        }
+    });
+
+    // Delete selected logs
+    $('#delete-selected-logs').on('click', function() {
+        var selectedIds = $('.log-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+        
+        if (selectedIds.length === 0) {
+            showMessage('<?php echo esc_js(__('No logs selected for deletion.', 'wp-otp')); ?>', 'error');
+            return;
+        }
+        
+        if (confirm('<?php echo esc_js(__('Are you sure you want to delete the selected logs?', 'wp-otp')); ?>')) {
+            $.ajax({
+                url: ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'wp_otp_delete_logs',
+                    nonce: nonce,
+                    log_ids: selectedIds
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('.log-checkbox:checked').closest('tr').fadeOut(300, function() {
+                            $(this).remove();
+                            updateLogSelection();
+                        });
+                        showMessage(response.data.message, 'success');
+                    } else {
+                        showMessage(response.data.message, 'error');
+                    }
+                },
+                error: function() {
+                    showMessage('<?php echo esc_js(__('An error occurred while deleting the logs.', 'wp-otp')); ?>', 'error');
+                }
+            });
+        }
+    });
+
+    // Delete all filtered logs
+    $('#delete-all-filtered-logs').on('click', function() {
+        var totalLogs = $('.log-checkbox').length;
+        
+        if (totalLogs === 0) {
+            showMessage('<?php echo esc_js(__('No logs to delete.', 'wp-otp')); ?>', 'error');
+            return;
+        }
+        
+        if (confirm('<?php echo esc_js(__('Are you sure you want to delete all filtered logs? This action cannot be undone.', 'wp-otp')); ?>')) {
+            // Get current filter values
+            var filterData = {
+                from_date: $('input[name="from_date"]').val(),
+                to_date: $('input[name="to_date"]').val(),
+                contact: $('input[name="contact"]').val(),
+                channel: $('select[name="channel"]').val(),
+                event_types: $('input[name="event_type[]"]:checked').map(function() {
+                    return $(this).val();
+                }).get()
+            };
+            
+            $.ajax({
+                url: ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'wp_otp_delete_all_logs',
+                    nonce: nonce,
+                    ...filterData
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('.log-checkbox').closest('tr').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                        updateLogSelection();
+                        showMessage(response.data.message, 'success');
+                        
+                        // Reload page after a short delay to refresh statistics
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showMessage(response.data.message, 'error');
+                    }
+                },
+                error: function() {
+                    showMessage('<?php echo esc_js(__('An error occurred while deleting the logs.', 'wp-otp')); ?>', 'error');
+                }
+            });
+        }
+    });
+
+    function showMessage(message, type) {
+        var messageClass = type === 'success' ? 'notice-success' : 'notice-error';
+        var notice = $('<div class="notice ' + messageClass + ' is-dismissible"><p>' + message + '</p></div>');
+        
+        $('.wrap h1').after(notice);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            notice.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 5000);
+    }
+
+    // Initialize log selection
+    updateLogSelection();
 });
 </script>
