@@ -74,7 +74,8 @@ class WP_OTP_Delivery_Email
         $sent = wp_mail($email, $subject, $message, $headers);
 
         if (!$sent) {
-            error_log("WP OTP: wp_mail failed to send to $email");
+            $logger = new \WpOtp\WP_OTP_Logger();
+            $logger->error("wp_mail failed to send to $email", $email, 'email');
         }
 
         /**
