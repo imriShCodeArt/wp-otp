@@ -46,11 +46,12 @@ class WP_OTP_Logger
     /**
      * Log an event to the logs table.
      *
-     * @param string      $event_type Event type (e.g. send, verify, etc.)
+     * @param string      $event_type Event type (debug/info/warning/error/critical).
      * @param string      $contact    The contact info (email or phone).
      * @param string|null $message    Optional log message.
      * @param string|null $channel    Channel used (email|sms).
      * @param int|null    $user_id    Optional user ID associated with the event.
+
      *
      * @return bool Whether the log was successfully inserted.
      */
@@ -81,7 +82,7 @@ class WP_OTP_Logger
         // Also log to WordPress debug log if enabled
         if ($this->debug_log) {
             $log_message = sprintf(
-                '[WP OTP] [%s] %s - Contact: %s, Channel: %s, User: %s - %s',
+                '[WP OTP] [%s] Contact: %s, Channel: %s, User: %s - %s',
                 strtoupper($event_type),
                 $contact,
                 $channel ?? 'N/A',
@@ -244,6 +245,8 @@ class WP_OTP_Logger
             $where_values = array_merge($where_values, $args['event_types']);
         }
 
+
+
         if ($args['contact']) {
             $where_conditions[] = 'contact LIKE %s';
             $where_values[] = '%' . $wpdb->esc_like($args['contact']) . '%';
@@ -320,6 +323,8 @@ class WP_OTP_Logger
         $stats['by_event_type'] = $wpdb->get_results(
             "SELECT event_type, COUNT(*) as count FROM {$this->table_name} GROUP BY event_type"
         );
+
+
 
         // Logs by channel
         $stats['by_channel'] = $wpdb->get_results(
