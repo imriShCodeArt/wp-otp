@@ -8,7 +8,7 @@
 
     <div class="d-flex flex-wrap gap-2">
         <button type="button" id="wp-otp-verify-btn" class="btn btn-outline-secondary btn-sm wp-otp-btn">
-            <?php esc_html_e('Verify OTP', 'wp-otp'); ?>
+            <?php esc_html_e('Verify & Login', 'wp-otp'); ?>
         </button>
         <button type="button" id="wp-otp-change-contact-btn" class="btn btn-outline-secondary btn-sm wp-otp-btn">
             <?php esc_html_e('Change Email/Phone', 'wp-otp'); ?>
