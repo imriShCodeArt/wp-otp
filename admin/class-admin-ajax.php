@@ -16,10 +16,11 @@ class WP_OTP_Admin_Ajax
     public function __construct()
     {
         add_action('wp_ajax_wp_otp_save_settings', [$this, 'save_settings']);
-        add_action('wp_ajax_nopriv_wp_otp_send_otp', [$this, 'wp_otp_send_otp']);
-        add_action('wp_ajax_wp_otp_send_otp', [$this, 'wp_otp_send_otp']);
-        add_action('wp_ajax_nopriv_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
-        add_action('wp_ajax_wp_otp_verify_otp', [$this, 'wp_otp_verify_otp']);
+        // Use different action names to avoid conflicts with auth handlers
+        add_action('wp_ajax_nopriv_wp_otp_send_otp_general', [$this, 'wp_otp_send_otp']);
+        add_action('wp_ajax_wp_otp_send_otp_general', [$this, 'wp_otp_send_otp']);
+        add_action('wp_ajax_nopriv_wp_otp_verify_otp_general', [$this, 'wp_otp_verify_otp']);
+        add_action('wp_ajax_wp_otp_verify_otp_general', [$this, 'wp_otp_verify_otp']);
         
         // Log deletion handlers
         add_action('wp_ajax_wp_otp_delete_log', [$this, 'delete_log']);
@@ -35,47 +36,47 @@ class WP_OTP_Admin_Ajax
     public function wp_otp_send_otp()
     {
         $logger = new \WpOtp\WP_OTP_Logger();
-        $logger->debug('send_otp AJAX called');
+        $logger->debug('send_otp AJAX called', null, null, null, 'ajax_send_otp');
         
         try {
             check_ajax_referer('wp_otp_nonce', 'nonce');
-            $logger->debug('Send nonce check passed');
+            $logger->debug('Send nonce check passed', null, null, null, 'ajax_nonce_check');
 
             $contact = sanitize_text_field($_POST['contact'] ?? '');
-            $channel = sanitize_text_field($_POST['channel'] ?? '');
+            $channel = sanitize_text_field($_POST['channel'] ?? 'email');
             
-            $logger->debug('Send - Contact: ' . $contact . ', Channel: ' . $channel);
+            $logger->debug('Send - Contact: ' . $contact . ', Channel: ' . $channel, $contact, $channel, null);
 
             if (empty($contact)) {
-                $logger->warning('Missing contact for send');
+                $logger->warning('Missing contact for send OTP', $contact, $channel, null, 'ajax_missing_contact');
                 wp_send_json_error([
                     'message' => __('Contact information is required.', 'wp-otp'),
                     'code' => 'missing_contact'
                 ]);
             }
 
-            $logger->debug('Creating manager for send');
+            $logger->debug('Creating manager for send', $contact, $channel, null, 'ajax_manager_creation');
             $manager = new \WpOtp\WP_OTP_Manager();
-            $logger->debug('Manager created, calling send_otp');
+            $logger->debug('Manager created, calling send_otp', $contact, $channel, null);
             
             $result = $manager->send_otp($contact, $channel);
-            $logger->debug('Send result: ' . print_r($result, true));
+            $logger->debug('Send result: ' . print_r($result, true), $contact, $channel, null);
 
             if (!empty($result['success'])) {
-                $logger->info('Send successful');
+                $logger->info('Send successful', $contact, $channel, null, 'ajax_send_success');
                 wp_send_json_success([
                     'message' => $result['message'] ?? __('OTP sent successfully.', 'wp-otp'),
                     'code' => $result['code'] ?? ''
                 ]);
             } else {
-                $logger->error('Send failed');
+                $logger->error('Send failed', $contact, $channel, null, 'ajax_send_failed');
                 wp_send_json_error([
                     'message' => $result['message'] ?? __('Failed to send OTP.', 'wp-otp'),
                     'code' => $result['code'] ?? 'send_failed'
                 ]);
             }
         } catch (Exception $e) {
-            $logger->exception($e, $contact ?? 'unknown', $channel ?? 'unknown');
+            $logger->exception($e, $contact ?? 'unknown', $channel ?? 'unknown', null, 'ajax_send_exception');
             wp_send_json_error([
                 'message' => __('An error occurred while sending OTP.', 'wp-otp'),
                 'code' => 'exception'
@@ -91,47 +92,47 @@ class WP_OTP_Admin_Ajax
     public function wp_otp_verify_otp()
     {
         $logger = new \WpOtp\WP_OTP_Logger();
-        $logger->debug('verify_otp AJAX called');
+        $logger->debug('verify_otp AJAX called', null, null, null, 'ajax_verify_otp');
         
         try {
             check_ajax_referer('wp_otp_nonce', 'nonce');
-            $logger->debug('Nonce check passed');
+            $logger->debug('Nonce check passed', null, null, null, 'ajax_nonce_check');
 
             $contact = sanitize_text_field($_POST['contact'] ?? '');
             $otp = sanitize_text_field($_POST['otp'] ?? '');
             
-            $logger->debug('Contact: ' . $contact . ', OTP: ' . $otp);
+            $logger->debug('Contact: ' . $contact . ', OTP: ' . $otp, $contact, null, null);
 
             if (empty($contact) || empty($otp)) {
-                $logger->warning('Missing contact or OTP');
+                $logger->warning('Missing contact or OTP', $contact, null, null, 'ajax_missing_fields');
                 wp_send_json_error([
                     'message' => __('Both contact and OTP are required.', 'wp-otp'),
                     'code' => 'missing_fields'
                 ]);
             }
 
-            $logger->debug('Creating manager instance');
+            $logger->debug('Creating manager instance', $contact, null, null, 'ajax_manager_creation');
             $manager = new \WpOtp\WP_OTP_Manager();
-            $logger->debug('Manager created, calling verify_otp');
+            $logger->debug('Manager created, calling verify_otp', $contact, null, null);
             
             $result = $manager->verify_otp($contact, $otp);
-            $logger->debug('Verify result: ' . print_r($result, true));
+            $logger->debug('Verify result: ' . print_r($result, true), $contact, null, null);
 
             if (!empty($result['success'])) {
-                $logger->info('Verification successful');
+                $logger->info('Verification successful', $contact, null, null, 'ajax_verify_success');
                 wp_send_json_success([
                     'message' => $result['message'] ?? __('OTP verified successfully.', 'wp-otp'),
                     'code' => $result['code'] ?? ''
                 ]);
             } else {
-                $logger->error('Verification failed');
+                $logger->error('Verification failed', $contact, null, null, 'ajax_verify_failed');
                 wp_send_json_error([
                     'message' => $result['message'] ?? __('Invalid or expired OTP.', 'wp-otp'),
                     'code' => $result['code'] ?? 'verify_failed'
                 ]);
             }
         } catch (Exception $e) {
-            $logger->exception($e, $contact ?? 'unknown');
+            $logger->exception($e, $contact ?? 'unknown', null, null, 'ajax_verify_exception');
             wp_send_json_error([
                 'message' => __('An error occurred during verification.', 'wp-otp'),
                 'code' => 'exception'
@@ -285,6 +286,11 @@ class WP_OTP_Admin_Ajax
             $filter_args['event_types'] = array_map('sanitize_text_field', $_POST['event_types']);
         }
 
+        // Subject filter
+        if (!empty($_POST['subjects']) && is_array($_POST['subjects'])) {
+            $filter_args['subjects'] = array_map('sanitize_text_field', $_POST['subjects']);
+        }
+
         $logger = new \WpOtp\WP_OTP_Logger();
         $deleted_count = $logger->delete_all_logs($filter_args);
 
@@ -315,36 +321,36 @@ class WP_OTP_Admin_Ajax
     public function wp_otp_process_user()
     {
         $logger = new \WpOtp\WP_OTP_Logger();
-        $logger->debug('process_user AJAX called');
+        $logger->debug('process_user AJAX called', null, null, null, 'ajax_process_user');
         
         try {
             check_ajax_referer('wp_otp_nonce', 'nonce');
-            $logger->debug('Process user nonce check passed');
+            $logger->debug('Process user nonce check passed', null, null, null, 'ajax_nonce_check');
 
             $contact = sanitize_text_field($_POST['contact'] ?? '');
             $otp = sanitize_text_field($_POST['otp'] ?? '');
             $action_type = sanitize_text_field($_POST['actionType'] ?? 'login');
             $channel = sanitize_text_field($_POST['channel'] ?? 'email');
             
-            $logger->debug('Process user - Contact: ' . $contact . ', OTP: ' . $otp . ', Action: ' . $action_type . ', Channel: ' . $channel);
+            $logger->debug('Process user - Contact: ' . $contact . ', OTP: ' . $otp . ', Action: ' . $action_type . ', Channel: ' . $channel, $contact, $channel, null);
 
             if (empty($contact) || empty($otp)) {
-                $logger->warning('Missing contact or OTP for process user');
+                $logger->warning('Missing contact or OTP for process user', $contact, $channel, null, 'ajax_missing_fields');
                 wp_send_json_error([
                     'message' => __('Both contact and OTP are required.', 'wp-otp'),
                     'code' => 'missing_fields'
                 ]);
             }
 
-            $logger->debug('Creating manager for process user');
+            $logger->debug('Creating manager for process user', $contact, $channel, null, 'ajax_manager_creation');
             $manager = new \WpOtp\WP_OTP_Manager();
-            $logger->debug('Manager created, calling verify_otp');
+            $logger->debug('Manager created, calling verify_otp', $contact, $channel, null);
             
             $result = $manager->verify_otp($contact, $otp);
-            $logger->debug('Verify result: ' . print_r($result, true));
+            $logger->debug('Verify result: ' . print_r($result, true), $contact, $channel, null);
 
             if (!empty($result['success'])) {
-                $logger->info('Verification successful, processing user');
+                $logger->info('Verification successful, processing user', $contact, $channel, null);
                 
                 // Find or create user based on contact
                 $user = $this->get_or_create_user($contact, $channel);
@@ -354,7 +360,7 @@ class WP_OTP_Admin_Ajax
                     wp_set_current_user($user->ID);
                     wp_set_auth_cookie($user->ID);
                     
-                    $logger->info('User logged in successfully');
+                    $logger->info('User logged in successfully', $contact, $channel, $user->ID, 'ajax_login_success');
                     
                     $redirect_url = $this->get_redirect_url($action_type);
                     
@@ -364,21 +370,21 @@ class WP_OTP_Admin_Ajax
                         'redirect' => $redirect_url
                     ]);
                 } else {
-                    $logger->error('Failed to create/find user');
+                    $logger->error('Failed to create/find user', $contact, $channel, null, 'ajax_user_creation_failed');
                     wp_send_json_error([
                         'message' => __('Failed to create user account.', 'wp-otp'),
                         'code' => 'user_creation_failed'
                     ]);
                 }
             } else {
-                $logger->error('Verification failed in process user');
+                $logger->error('Verification failed in process user', $contact, $channel, null, 'ajax_verify_failed');
                 wp_send_json_error([
                     'message' => $result['message'] ?? __('Invalid or expired OTP.', 'wp-otp'),
                     'code' => $result['code'] ?? 'verify_failed'
                 ]);
             }
         } catch (Exception $e) {
-            $logger->exception($e, $contact ?? 'unknown', $channel ?? 'unknown');
+            $logger->exception($e, $contact ?? 'unknown', $channel ?? 'unknown', null, 'ajax_process_exception');
             wp_send_json_error([
                 'message' => __('An error occurred during authentication.', 'wp-otp'),
                 'code' => 'exception'
