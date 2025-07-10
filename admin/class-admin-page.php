@@ -167,7 +167,7 @@ class WP_OTP_Admin_Page
             'otp_resend_window' => __('OTP Resend Window (minutes)', 'wp-otp'),
             'otp_length' => __('OTP Length', 'wp-otp'),
             'otp_expiry' => __('OTP Expiry (minutes)', 'wp-otp'),
-            'phone_only_auth' => __('Enable Phone-only Authentication', 'wp-otp'),
+            'phone_only_auth' => __('Use OTP Only for Authentication', 'wp-otp'),
             'email_subject' => __('Email Subject', 'wp-otp'),
             'email_body' => __('Email Body', 'wp-otp'),
             'sms_sender' => __('SMS Sender Name', 'wp-otp'),
@@ -346,6 +346,13 @@ class WP_OTP_Admin_Page
             $filter_args['event_types'] = $event_types;
         }
 
+        // Subject filter
+        if (!empty($_GET['subject'])) {
+            $subjects = is_array($_GET['subject']) ? $_GET['subject'] : [$_GET['subject']];
+            $subjects = array_map('sanitize_text_field', $subjects);
+            $filter_args['subjects'] = $subjects;
+        }
+
         // Get logs using the logger's get_logs method
         $logs = $logger->get_logs($filter_args);
 
@@ -402,6 +409,13 @@ class WP_OTP_Admin_Page
             $filter_args['event_types'] = $event_types;
         }
 
+        // Subject filter
+        if (!empty($_GET['subject'])) {
+            $subjects = is_array($_GET['subject']) ? $_GET['subject'] : [$_GET['subject']];
+            $subjects = array_map('sanitize_text_field', $subjects);
+            $filter_args['subjects'] = $subjects;
+        }
+
         // Get logs using the logger's get_logs method
         $logs = $logger->get_logs($filter_args);
 
@@ -420,12 +434,13 @@ class WP_OTP_Admin_Page
         $output = fopen('php://output', 'w');
 
         // CSV header
-        fputcsv($output, ['ID', 'Event Type', 'Contact', 'Channel', 'User ID', 'Message', 'Created At']);
+        fputcsv($output, ['ID', 'Event Type', 'Subject', 'Contact', 'Channel', 'User ID', 'Message', 'Created At']);
 
         foreach ($logs as $log) {
             fputcsv($output, [
                 $log->id,
                 $log->event_type,
+                $log->subject ?? 'N/A',
                 $log->contact,
                 $log->channel,
                 $log->user_id,
