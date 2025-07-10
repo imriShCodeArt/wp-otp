@@ -138,7 +138,8 @@
                     <input type="checkbox" id="select-all-checkbox">
                 </th>
                 <th><?php esc_html_e('Date', 'wp-otp'); ?></th>
-                <th><?php esc_html_e('Event Type', 'wp-otp'); ?></th>
+                <th><?php esc_html_e('Type', 'wp-otp'); ?></th>
+                <th><?php esc_html_e('Subject', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Contact', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('Channel', 'wp-otp'); ?></th>
                 <th><?php esc_html_e('User ID', 'wp-otp'); ?></th>
@@ -148,14 +149,19 @@
         </thead>
         <tbody>
             <?php foreach ($logs as $log): ?>
-                <tr data-log-id="<?php echo esc_attr($log->id); ?>">
+                <tr>
                     <td>
                         <input type="checkbox" class="log-checkbox" value="<?php echo esc_attr($log->id); ?>">
                     </td>
                     <td><?php echo esc_html($log->created_at); ?></td>
                     <td>
                         <span class="log-event-type log-event-type-<?php echo esc_attr($log->event_type); ?>">
-                            <?php echo esc_html($log->event_type); ?>
+                            <?php echo esc_html(ucfirst($log->event_type)); ?>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="log-subject log-subject-<?php echo esc_attr($log->subject); ?>">
+                            <?php echo esc_html($log->subject ?? 'N/A'); ?>
                         </span>
                     </td>
                     <td><?php echo esc_html($log->contact); ?></td>
@@ -187,10 +193,79 @@
 .log-event-type-warning { background: #fff3cd; color: #856404; }
 .log-event-type-error { background: #f8d7da; color: #721c24; }
 .log-event-type-critical { background: #f5c6cb; color: #721c24; }
-.log-event-type-send_success { background: #d4edda; color: #155724; }
-.log-event-type-send_failed { background: #f8d7da; color: #721c24; }
-.log-event-type-verify_success { background: #d4edda; color: #155724; }
-.log-event-type-verify_failed { background: #f8d7da; color: #721c24; }
+
+.log-subject {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.log-subject-auth_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-auth_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-auth_attempt { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-user_lookup_start { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-user_found { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-user_not_found { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-user_creation_start { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-user_creation_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-user_ready { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-login_attempt { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-login_verification { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-otp_verified { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+
+.log-subject-db_validation_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-db_otp_saved { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-db_otp_save_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-db_otp_not_found { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-db_status_updated { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-db_status_update_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-db_attempts_incremented { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-db_attempts_increment_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-db_cleanup_completed { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-db_high_attempt_count { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-db_error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-db_expired_otps_found { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+
+.log-subject-send_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-send_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-send_blocked { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-verify_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-verify_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+.log-subject-sms_sent { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-sms_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-sms_balance_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+.log-subject-ajax_send_otp { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_nonce_check { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_send_params { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_missing_contact { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-ajax_manager_creation { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_send_call { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_send_result { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_send_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-ajax_send_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-ajax_send_exception { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+.log-subject-ajax_verify_otp { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_verify_params { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_missing_fields { background: #fff3cd; color: #856404; border-color: #ffeaa7; }
+.log-subject-ajax_verify_call { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_verify_result { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_verify_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-ajax_verify_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-ajax_verify_exception { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+.log-subject-ajax_process_user { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_process_params { background: #e7f3ff; color: #0066cc; border-color: #b3d9ff; }
+.log-subject-ajax_process_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-ajax_login_success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+.log-subject-ajax_user_creation_failed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+.log-subject-ajax_process_exception { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
 </style>
 
 <script>
