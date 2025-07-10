@@ -100,6 +100,7 @@ function wp_otp_activate()
     $sql_logs = "CREATE TABLE $logs_table (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         event_type VARCHAR(50) NOT NULL,
+        subject VARCHAR(100) NULL,
         contact VARCHAR(255) NOT NULL,
         message TEXT NULL,
         channel VARCHAR(50) NULL,
@@ -114,6 +115,130 @@ function wp_otp_activate()
 
     if (get_option('wp_otp_settings') === false) {
         update_option('wp_otp_settings', wp_otp_default_settings());
+    }
+    
+    // Run migration for logs table - only if table exists and has data
+    try {
+        wp_otp_migrate_logs_table();
+    } catch (Exception $e) {
+        // Log the error but don't fail activation
+        error_log('WP OTP: Migration error during activation: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Migrate logs table to add subject column and reorganize log types.
+ */
+function wp_otp_migrate_logs_table()
+{
+    global $wpdb;
+    
+    $logs_table = $wpdb->prefix . 'otp_logs';
+    
+    // Check if table exists first
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$logs_table'");
+    if (!$table_exists) {
+        return; // Table doesn't exist, nothing to migrate
+    }
+    
+    // Check if subject column exists
+    $column_exists = $wpdb->get_results(
+        "SHOW COLUMNS FROM $logs_table LIKE 'subject'"
+    );
+    
+    if (empty($column_exists)) {
+        // Add subject column
+        $result = $wpdb->query("ALTER TABLE $logs_table ADD COLUMN subject VARCHAR(100) NULL AFTER event_type");
+        if ($result === false) {
+            error_log('WP OTP: Failed to add subject column to logs table');
+            return;
+        }
+    }
+    
+    // Check if there are any existing logs to migrate
+    $log_count = $wpdb->get_var("SELECT COUNT(*) FROM $logs_table");
+    if ($log_count == 0) {
+        return; // No logs to migrate
+    }
+    
+    // Update existing logs to map old event_types to new subjects and standardize types
+    $log_mappings = [
+        // Authentication related
+        'auth_success' => ['subject' => 'auth_success', 'type' => 'info'],
+        'auth_failed' => ['subject' => 'auth_failed', 'type' => 'error'],
+        'auth_attempt' => ['subject' => 'auth_attempt', 'type' => 'info'],
+        'user_lookup_start' => ['subject' => 'user_lookup_start', 'type' => 'debug'],
+        'user_found' => ['subject' => 'user_found', 'type' => 'info'],
+        'user_not_found' => ['subject' => 'user_not_found', 'type' => 'info'],
+        'user_creation_start' => ['subject' => 'user_creation_start', 'type' => 'info'],
+        'user_creation_failed' => ['subject' => 'user_creation_failed', 'type' => 'error'],
+        'user_ready' => ['subject' => 'user_ready', 'type' => 'info'],
+        'login_attempt' => ['subject' => 'login_attempt', 'type' => 'info'],
+        'login_verification' => ['subject' => 'login_verification', 'type' => 'debug'],
+        'otp_verified' => ['subject' => 'otp_verified', 'type' => 'info'],
+        
+        // Database related
+        'db_validation_failed' => ['subject' => 'db_validation_failed', 'type' => 'error'],
+        'db_otp_saved' => ['subject' => 'db_otp_saved', 'type' => 'info'],
+        'db_otp_save_failed' => ['subject' => 'db_otp_save_failed', 'type' => 'error'],
+        'db_otp_not_found' => ['subject' => 'db_otp_not_found', 'type' => 'warning'],
+        'db_status_updated' => ['subject' => 'db_status_updated', 'type' => 'info'],
+        'db_status_update_failed' => ['subject' => 'db_status_update_failed', 'type' => 'error'],
+        'db_attempts_incremented' => ['subject' => 'db_attempts_incremented', 'type' => 'info'],
+        'db_attempts_increment_failed' => ['subject' => 'db_attempts_increment_failed', 'type' => 'error'],
+        'db_cleanup_completed' => ['subject' => 'db_cleanup_completed', 'type' => 'info'],
+        'db_high_attempt_count' => ['subject' => 'db_high_attempt_count', 'type' => 'warning'],
+        'db_error' => ['subject' => 'db_error', 'type' => 'error'],
+        'db_expired_otps_found' => ['subject' => 'db_expired_otps_found', 'type' => 'info'],
+        
+        // OTP sending/verification
+        'send_success' => ['subject' => 'send_success', 'type' => 'info'],
+        'send_failed' => ['subject' => 'send_failed', 'type' => 'error'],
+        'send_blocked' => ['subject' => 'send_blocked', 'type' => 'warning'],
+        'verify_success' => ['subject' => 'verify_success', 'type' => 'info'],
+        'verify_failed' => ['subject' => 'verify_failed', 'type' => 'error'],
+        
+        // SMS related
+        'sms_sent' => ['subject' => 'sms_sent', 'type' => 'info'],
+        'sms_failed' => ['subject' => 'sms_failed', 'type' => 'error'],
+        'sms_balance_failed' => ['subject' => 'sms_balance_failed', 'type' => 'error'],
+        
+        // User creation related
+        'registration_check' => ['subject' => 'registration_check', 'type' => 'debug'],
+        'username_generated' => ['subject' => 'username_generated', 'type' => 'debug'],
+        'user_data_prepared' => ['subject' => 'user_data_prepared', 'type' => 'debug'],
+        'registration_temporarily_enabled' => ['subject' => 'registration_temporarily_enabled', 'type' => 'info'],
+        'registration_restored' => ['subject' => 'registration_restored', 'type' => 'info'],
+        
+        // System related
+        'system' => ['subject' => 'system', 'type' => 'info'],
+        'debug' => ['subject' => 'debug', 'type' => 'debug'],
+        'info' => ['subject' => 'info', 'type' => 'info'],
+        'warning' => ['subject' => 'warning', 'type' => 'warning'],
+        'error' => ['subject' => 'error', 'type' => 'error'],
+        'critical' => ['subject' => 'critical', 'type' => 'critical'],
+    ];
+    
+    foreach ($log_mappings as $old_event_type => $mapping) {
+        $result = $wpdb->query($wpdb->prepare(
+            "UPDATE $logs_table SET subject = %s, event_type = %s WHERE event_type = %s",
+            $mapping['subject'],
+            $mapping['type'],
+            $old_event_type
+        ));
+        
+        if ($result === false) {
+            error_log("WP OTP: Failed to update logs for event_type: $old_event_type");
+        }
+    }
+    
+    // Update any remaining logs that don't have a subject
+    $result = $wpdb->query(
+        "UPDATE $logs_table SET subject = event_type WHERE subject IS NULL"
+    );
+    
+    if ($result === false) {
+        error_log('WP OTP: Failed to update remaining logs with subject');
     }
 }
 
@@ -134,30 +259,65 @@ function wp_otp_load_textdomain()
  */
 function wp_otp_init()
 {
-    // Always load core classes
-    if (class_exists(WP_OTP_Manager::class)) {
-        new WP_OTP_Manager();
-    }
-    if (class_exists(WP_OTP_Auth_Overrides::class)) {
-        new WP_OTP_Auth_Overrides();
-    }
+    try {
+        // Manually include required files to ensure they're loaded
+        $required_files = [
+            'includes/class-otp-manager.php',
+            'includes/class-otp-repository.php',
+            'includes/class-logger.php',
+            'includes/class-auth-overrides.php',
+            'includes/class-shortcodes.php'
+        ];
 
-    // Load frontend or shared classes
-    if (class_exists(WP_OTP_Shortcodes::class)) {
-        new WP_OTP_Shortcodes();
-    }
+        foreach ($required_files as $file) {
+            $file_path = WP_OTP_PATH . $file;
+            if (file_exists($file_path)) {
+                require_once $file_path;
+            } else {
+                error_log("WP OTP: Required file not found: $file_path");
+            }
+        }
 
-    // Admin classes
-    if (is_admin()) {
-        if (class_exists(WP_OTP_Admin_Page::class)) {
-            new WP_OTP_Admin_Page();
+        // Always load core classes
+        if (class_exists(WP_OTP_Manager::class)) {
+            new WP_OTP_Manager();
+        } else {
+            error_log('WP OTP: WP_OTP_Manager class not found');
         }
-        if (class_exists(WP_OTP_Admin_Fields::class)) {
-            new WP_OTP_Admin_Fields();
+        
+        if (class_exists(WP_OTP_Auth_Overrides::class)) {
+            new WP_OTP_Auth_Overrides();
+        } else {
+            error_log('WP OTP: WP_OTP_Auth_Overrides class not found');
         }
-        if (class_exists(WP_OTP_Admin_Ajax::class)) {
-            new WP_OTP_Admin_Ajax();
+
+        // Load frontend or shared classes
+        if (class_exists(WP_OTP_Shortcodes::class)) {
+            new WP_OTP_Shortcodes();
+        } else {
+            error_log('WP OTP: WP_OTP_Shortcodes class not found');
         }
+
+        // Admin classes
+        if (is_admin()) {
+            if (class_exists(WP_OTP_Admin_Page::class)) {
+                new WP_OTP_Admin_Page();
+            } else {
+                error_log('WP OTP: WP_OTP_Admin_Page class not found');
+            }
+            if (class_exists(WP_OTP_Admin_Fields::class)) {
+                new WP_OTP_Admin_Fields();
+            } else {
+                error_log('WP OTP: WP_OTP_Admin_Fields class not found');
+            }
+            if (class_exists(WP_OTP_Admin_Ajax::class)) {
+                new WP_OTP_Admin_Ajax();
+            } else {
+                error_log('WP OTP: WP_OTP_Admin_Ajax class not found');
+            }
+        }
+    } catch (Exception $e) {
+        error_log('WP OTP: Error during plugin initialization: ' . $e->getMessage());
     }
 }
 

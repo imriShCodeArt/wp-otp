@@ -60,16 +60,16 @@ class WP_OTP_Repository
     public function save_otp($contact, $hash, $expires_at)
     {
         if (!$this->validate_contact($contact) || !$this->validate_hash($hash) || !$this->validate_timestamp($expires_at)) {
-            $this->logger->log('db_validation_failed', $contact, 'Invalid parameters provided for OTP save', null, get_current_user_id());
+            $this->logger->error('Invalid parameters provided for OTP save', $contact, null, get_current_user_id());
             return false;
         }
 
         $result = $this->insert_code($contact, $hash, $expires_at);
         
         if ($result) {
-            $this->logger->log('db_otp_saved', $contact, "OTP saved successfully with ID: $result", null, get_current_user_id());
+            $this->logger->info("OTP saved successfully with ID: $result", $contact, null, get_current_user_id());
         } else {
-            $this->logger->log('db_otp_save_failed', $contact, 'Failed to save OTP to database', null, get_current_user_id());
+            $this->logger->error('Failed to save OTP to database', $contact, null, get_current_user_id());
         }
 
         return $result;
@@ -85,14 +85,14 @@ class WP_OTP_Repository
     public function get_otp_record($contact)
     {
         if (!$this->validate_contact($contact)) {
-            $this->logger->log('db_validation_failed', $contact, 'Invalid contact parameter for OTP retrieval', null, get_current_user_id());
+            $this->logger->error('Invalid contact parameter for OTP retrieval', $contact, null, get_current_user_id());
             return null;
         }
 
         $result = $this->get_code($contact);
         
         if (!$result) {
-            $this->logger->log('db_otp_not_found', $contact, 'No OTP record found for contact', null, get_current_user_id());
+            $this->logger->warning('No OTP record found for contact', $contact, null, get_current_user_id(), 'db_otp_not_found');
         }
 
         return $result;
@@ -109,7 +109,7 @@ class WP_OTP_Repository
     public function update_status($contact, $status)
     {
         if (!$this->validate_contact($contact) || !$this->validate_status($status)) {
-            $this->logger->log('db_validation_failed', $contact, "Invalid parameters for status update: $status", null, get_current_user_id());
+            $this->logger->error("Invalid parameters for status update: $status", $contact, null, get_current_user_id());
             return false;
         }
 
@@ -118,9 +118,9 @@ class WP_OTP_Repository
         ]);
         
         if ($result) {
-            $this->logger->log('db_status_updated', $contact, "OTP status updated to: $status", null, get_current_user_id());
+            $this->logger->info("OTP status updated to: $status", $contact, null, get_current_user_id());
         } else {
-            $this->logger->log('db_status_update_failed', $contact, "Failed to update OTP status to: $status", null, get_current_user_id());
+            $this->logger->error("Failed to update OTP status to: $status", $contact, null, get_current_user_id());
         }
 
         return $result;
@@ -136,7 +136,7 @@ class WP_OTP_Repository
     public function increment_attempts($contact)
     {
         if (!$this->validate_contact($contact)) {
-            $this->logger->log('db_validation_failed', $contact, 'Invalid contact parameter for attempts increment', null, get_current_user_id());
+            $this->logger->error('Invalid contact parameter for attempts increment', $contact, null, get_current_user_id());
             return false;
         }
 
@@ -148,9 +148,9 @@ class WP_OTP_Repository
         );
 
         if ($result !== false) {
-            $this->logger->log('db_attempts_incremented', $contact, "Failed attempts incremented for contact", null, get_current_user_id());
+            $this->logger->info("Failed attempts incremented for contact", $contact, null, get_current_user_id());
         } else {
-            $this->logger->log('db_attempts_increment_failed', $contact, 'Failed to increment attempts for contact', null, get_current_user_id());
+            $this->logger->error('Failed to increment attempts for contact', $contact, null, get_current_user_id());
         }
 
         return ($result === false) ? false : $result;
@@ -170,7 +170,7 @@ class WP_OTP_Repository
         $deleted_count = ($result === false) ? 0 : $result;
         
         if ($deleted_count > 0) {
-            $this->logger->log('db_cleanup_completed', 'system', "Cleaned up $deleted_count expired OTP records", null, get_current_user_id());
+            $this->logger->info("Cleaned up $deleted_count expired OTP records", 'system', null, get_current_user_id());
         }
 
         return $deleted_count;
@@ -189,7 +189,7 @@ class WP_OTP_Repository
     public function count_recent_otps($contact, $window_minutes)
     {
         if (!$this->validate_contact($contact) || !$this->validate_window_minutes($window_minutes)) {
-            $this->logger->log('db_validation_failed', $contact, "Invalid parameters for recent OTP count: window=$window_minutes", null, get_current_user_id());
+            $this->logger->error("Invalid parameters for recent OTP count: window=$window_minutes", $contact, null, get_current_user_id());
             return 0;
         }
 
@@ -207,7 +207,7 @@ class WP_OTP_Repository
         
         // Log high attempt counts for monitoring
         if ($count > 5) {
-            $this->logger->log('db_high_attempt_count', $contact, "High recent OTP count: $count in $window_minutes minutes", null, get_current_user_id());
+            $this->logger->warning("High recent OTP count: $count in $window_minutes minutes", $contact, null, get_current_user_id(), 'db_high_attempt_count');
         }
 
         return $count;
@@ -405,12 +405,12 @@ class WP_OTP_Repository
     private function log_db_error($operation, $contact)
     {
         if ($this->wpdb->last_error) {
-            $this->logger->log(
-                'db_error',
-                $contact,
+            $this->logger->error(
                 "Database error during $operation: " . $this->wpdb->last_error,
+                $contact,
                 null,
-                get_current_user_id()
+                get_current_user_id(),
+                'db_error'
             );
         }
     }
@@ -449,7 +449,7 @@ class WP_OTP_Repository
         $expired_count = ($result === null) ? 0 : count($result);
         
         if ($expired_count > 0) {
-            $this->logger->log('db_expired_otps_found', 'system', "Found $expired_count expired OTP records", null, get_current_user_id());
+            $this->logger->info("Found $expired_count expired OTP records", 'system', null, get_current_user_id());
         }
 
         return ($result === null) ? [] : $result;

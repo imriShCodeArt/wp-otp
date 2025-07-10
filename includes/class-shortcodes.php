@@ -61,6 +61,7 @@ class WP_OTP_Shortcodes
                 [
                     'ajaxUrl' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('wp_otp_nonce'),
+                    'authNonce' => wp_create_nonce('wp_otp_auth_nonce'),
                     'cooldown' => wp_otp_get_settings()['otp_cooldown'] ?? 30,
                     'phoneNumber' => __('Phone Number:', 'wp-otp'),
                     'emailAddress' => __('Email Address:', 'wp-otp'),

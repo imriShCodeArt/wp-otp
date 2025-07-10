@@ -144,7 +144,7 @@ class WP_OTP_Admin_Fields
     }
 
     /**
-     * Render the Phone-only Auth toggle field.
+     * Render the OTP-only Auth toggle field.
      *
      * @return void
      */
@@ -156,8 +156,11 @@ class WP_OTP_Admin_Fields
         <label for="wp_otp_phone_only_auth">
             <input type="checkbox" class="wp-otp-field" id="wp_otp_phone_only_auth" name="wp_otp_settings[phone_only_auth]"
                 value="1" <?php checked($checked); ?> />
-            <?php esc_html_e('Enable phone-only login/registration (no username or password).', 'wp-otp'); ?>
+            <?php esc_html_e('Use OTP only for register/login (disables username/password authentication).', 'wp-otp'); ?>
         </label>
+        <p class="description">
+            <?php esc_html_e('When enabled, users can only authenticate using OTP. When disabled, OTP is available as an additional authentication method alongside username/password.', 'wp-otp'); ?>
+        </p>
         <?php
     }
 
