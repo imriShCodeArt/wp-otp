@@ -41,6 +41,12 @@ class WP_OTP_Auth_Overrides
         $this->repository = new WP_OTP_Repository();
         $this->logger = new WP_OTP_Logger();
 
+        // Always register AJAX handlers for OTP send/verify
+        add_action('wp_ajax_nopriv_wp_otp_auth_send', [$this, 'handle_auth_send_otp']);
+        add_action('wp_ajax_wp_otp_auth_send', [$this, 'handle_auth_send_otp']);
+        add_action('wp_ajax_nopriv_wp_otp_auth_verify', [$this, 'handle_auth_verify_otp']);
+        add_action('wp_ajax_wp_otp_auth_verify', [$this, 'handle_auth_verify_otp']);
+
         // Only enable OTP-only auth if the setting is enabled
         if ($this->is_otp_only_auth_enabled()) {
             $this->init_hooks();
@@ -57,21 +63,17 @@ class WP_OTP_Auth_Overrides
         add_filter('authenticate', [$this, 'maybe_authenticate_user'], 30, 3);
         add_action('wp_logout', [$this, 'clear_otp_session']);
         
-        // Handle OTP authentication AJAX
-        add_action('wp_ajax_nopriv_wp_otp_auth_send', [$this, 'handle_auth_send_otp']);
-        add_action('wp_ajax_wp_otp_auth_send', [$this, 'handle_auth_send_otp']);
-        add_action('wp_ajax_nopriv_wp_otp_auth_verify', [$this, 'handle_auth_verify_otp']);
-        add_action('wp_ajax_wp_otp_auth_verify', [$this, 'handle_auth_verify_otp']);
-        
         // Override registration
         add_action('register_form', [$this, 'override_registration_form']);
         add_action('user_register', [$this, 'handle_user_registration']);
         
-        // Custom login page template
-        add_filter('login_form', [$this, 'render_otp_login_form']);
-        
         // Redirect after login
         add_filter('login_redirect', [$this, 'handle_login_redirect'], 10, 3);
+        
+        // Prevent default WordPress login form submission only in OTP-only mode
+        if ($this->is_otp_only_auth_enabled()) {
+            add_action('login_form', [$this, 'prevent_default_login'], 5);
+        }
     }
 
     /**
@@ -86,19 +88,32 @@ class WP_OTP_Auth_Overrides
     }
 
     /**
+     * Prevent default WordPress login form from being rendered.
+     */
+    public function prevent_default_login()
+    {
+        // Remove default WordPress login form
+        remove_action('login_form', 'wp_login_form');
+    }
+
+    /**
      * Override WordPress login UI with OTP form.
      */
     public function override_wp_login_ui()
     {
-        // Only override if we're on the login page and OTP-only auth is enabled
+        // Only override if we're on the login page
         if (!isset($_GET['action']) || $_GET['action'] === 'login') {
-            // Remove default WordPress login form
-            remove_action('login_form', 'wp_login_form');
-            
-            // Add our custom OTP login form
-            add_action('login_form', [$this, 'render_otp_login_form']);
+            if ($this->is_otp_only_auth_enabled()) {
+                // OTP-only mode: Remove default WordPress login form completely
+                remove_action('login_form', 'wp_login_form');
+                add_action('login_form', [$this, 'render_otp_login_form']);
+            }
+            // Note: In dual mode (checkbox unchecked), we don't override anything
+            // The default WordPress login form will remain untouched
         }
     }
+
+
 
     /**
      * Render the OTP login form.
@@ -174,10 +189,9 @@ class WP_OTP_Auth_Overrides
                     // Set OTP session
                     $this->set_otp_session($user->ID, $contact);
                     
-                    $this->logger->log(
-                        'auth_success',
-                        $contact,
+                    $this->logger->info(
                         "User authenticated via OTP: {$user->user_login}",
+                        $contact,
                         null,
                         $user->ID
                     );
@@ -187,16 +201,20 @@ class WP_OTP_Auth_Overrides
                     return new \WP_Error('user_creation_failed', __('Failed to create user account.', 'wp-otp'));
                 }
             } else {
-                $this->logger->log(
-                    'auth_failed',
-                    $contact,
+                $this->logger->error(
                     "OTP authentication failed: {$result['message']}",
+                    $contact,
                     null,
                     null
                 );
                 
                 return new \WP_Error('invalid_otp', $result['message']);
             }
+        }
+
+        // If OTP-only mode is enabled and this is not an OTP auth attempt, block regular auth
+        if ($this->is_otp_only_auth_enabled() && !empty($username)) {
+            return new \WP_Error('otp_only_mode', __('This site requires OTP authentication. Please use the OTP login option.', 'wp-otp'));
         }
 
         // If not OTP auth, return original user (or null for default WordPress auth)
@@ -211,12 +229,32 @@ class WP_OTP_Auth_Overrides
      */
     private function get_or_create_user($contact)
     {
+        $this->logger->debug(
+            "Starting user lookup/creation process",
+            $contact,
+            null,
+            null
+        );
+
         // Try to find existing user by email or phone
         $user = $this->find_user_by_contact($contact);
 
         if ($user) {
+            $this->logger->info(
+                "Existing user found: {$user->user_login} (ID: {$user->ID})",
+                $contact,
+                null,
+                $user->ID
+            );
             return $user;
         }
+
+        $this->logger->info(
+            "No existing user found, creating new user",
+            $contact,
+            null,
+            null
+        );
 
         // Create new user
         return $this->create_user_from_contact($contact);
@@ -258,8 +296,31 @@ class WP_OTP_Auth_Overrides
     {
         $is_email = is_email($contact);
         
+        $this->logger->info(
+            "Starting user creation - Contact type: " . ($is_email ? 'email' : 'phone'),
+            $contact,
+            null,
+            null
+        );
+
+        // Check if user registration is enabled in WordPress
+        $registration_enabled = get_option('users_can_register');
+        $this->logger->debug(
+            "WordPress registration enabled: " . ($registration_enabled ? 'YES' : 'NO'),
+            $contact,
+            null,
+            null
+        );
+        
         // Generate username
         $username = $this->generate_unique_username($contact);
+        
+        $this->logger->debug(
+            "Generated username: {$username}",
+            $contact,
+            null,
+            null
+        );
         
         // Create user data
         $user_data = [
@@ -270,14 +331,69 @@ class WP_OTP_Auth_Overrides
             'role' => 'subscriber',
         ];
 
+        $this->logger->debug(
+            "User data prepared for creation",
+            $contact,
+            null,
+            null
+        );
+
+        // Temporarily enable user registration if it's disabled
+        $original_registration = get_option('users_can_register');
+        if (!$original_registration) {
+            update_option('users_can_register', 1);
+            $this->logger->info(
+                "Temporarily enabled user registration for OTP user creation",
+                $contact,
+                null,
+                null
+            );
+        }
+
         // Insert user
         $user_id = wp_insert_user($user_data);
 
+        // Restore original registration setting
+        if (!$original_registration) {
+            update_option('users_can_register', $original_registration);
+            $this->logger->info(
+                "Restored original user registration setting",
+                $contact,
+                null,
+                null
+            );
+        }
+
         if (is_wp_error($user_id)) {
+            $this->logger->error(
+                "wp_insert_user failed: " . $user_id->get_error_message(),
+                $contact,
+                null,
+                null
+            );
             return $user_id;
         }
 
+        $this->logger->info(
+            "User created successfully with ID: {$user_id}",
+            $contact,
+            null,
+            $user_id,
+            'user_created_success'
+        );
+
         $user = get_user_by('id', $user_id);
+
+        if (!$user) {
+            $this->logger->error(
+                "Failed to retrieve created user with ID: {$user_id}",
+                $contact,
+                null,
+                null,
+                'user_retrieval_failed'
+            );
+            return new \WP_Error('user_retrieval_failed', 'Failed to retrieve created user');
+        }
 
         // Store contact info in user meta
         if ($is_email) {
@@ -286,12 +402,20 @@ class WP_OTP_Auth_Overrides
             update_user_meta($user_id, 'wp_otp_phone', $contact);
         }
 
-        $this->logger->log(
-            'user_created',
+        $this->logger->info(
+            "User meta updated for user ID: {$user_id}",
             $contact,
-            "New user created via OTP: {$username}",
             null,
-            $user_id
+            $user_id,
+            'user_meta_updated'
+        );
+
+        $this->logger->info(
+            "New user created via OTP: {$username}",
+            $contact,
+            null,
+            $user_id,
+            'user_created'
         );
 
         return $user;
@@ -371,31 +495,109 @@ class WP_OTP_Auth_Overrides
             ]);
         }
 
+        // Log the verification attempt
+        $this->logger->info(
+            "OTP verification attempt started",
+            $contact,
+            null,
+            null
+        );
+
         // Verify OTP
         $result = $this->otp_manager->verify_otp($contact, $otp);
 
         if ($result['success']) {
+            // Log successful OTP verification
+            $this->logger->info(
+                "OTP verified successfully, proceeding to user creation/login",
+                $contact,
+                null,
+                null
+            );
+
             // Get or create user
             $user = $this->get_or_create_user($contact);
 
             if (is_wp_error($user)) {
+                $this->logger->error(
+                    "User creation failed: " . $user->get_error_message(),
+                    $contact,
+                    null,
+                    null
+                );
+                
                 wp_send_json_error([
                     'message' => $user->get_error_message()
                 ]);
             }
 
+            // Log successful user creation/finding
+            $this->logger->info(
+                "User ready for login: {$user->user_login} (ID: {$user->ID})",
+                $contact,
+                null,
+                $user->ID
+            );
+
             // Log in the user
-            wp_set_current_user($user->ID);
-            wp_set_auth_cookie($user->ID, true);
+            $login_result = wp_set_current_user($user->ID);
+            $cookie_result = wp_set_auth_cookie($user->ID, true);
+
+            // Log login attempt results
+            $this->logger->info(
+                "Login attempt - set_current_user: " . ($login_result ? 'success' : 'failed') . 
+                ", set_auth_cookie: " . ($cookie_result ? 'success' : 'failed'),
+                $contact,
+                null,
+                $user->ID
+            );
 
             // Set OTP session
             $this->set_otp_session($user->ID, $contact);
 
+            // Verify user is actually logged in
+            $current_user = wp_get_current_user();
+            $is_logged_in = $current_user->exists() && $current_user->ID === $user->ID;
+
+            $this->logger->debug(
+                "Login verification - User logged in: " . ($is_logged_in ? 'YES' : 'NO') . 
+                ", Current user ID: " . $current_user->ID . 
+                ", Expected user ID: " . $user->ID,
+                $contact,
+                null,
+                $user->ID
+            );
+
+            // Log successful authentication
+            $this->logger->info(
+                "User authenticated via OTP: {$user->user_login} (ID: {$user->ID})",
+                $contact,
+                null,
+                $user->ID
+            );
+
             wp_send_json_success([
                 'message' => __('Login successful!', 'wp-otp'),
-                'redirect_url' => $this->get_login_redirect_url($user)
+                'redirect_url' => $this->get_login_redirect_url($user),
+                'user_id' => $user->ID,
+                'user_login' => $user->user_login,
+                'is_logged_in' => $is_logged_in,
+                'debug_info' => [
+                    'current_user_id' => $current_user->ID,
+                    'expected_user_id' => $user->ID,
+                    'login_result' => $login_result,
+                    'cookie_result' => $cookie_result
+                ]
             ]);
         } else {
+            // Log failed authentication
+            $this->logger->error(
+                "OTP verification failed: {$result['message']}",
+                $contact,
+                null,
+                null
+            );
+
             wp_send_json_error([
                 'message' => $result['message']
             ]);

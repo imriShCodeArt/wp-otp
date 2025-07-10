@@ -36,13 +36,21 @@ jQuery(function ($) {
   }
 
   function ajaxRequest({ action, data, onSuccess, onError }) {
+    // Use different nonce for authentication actions
+    let nonceValue = selectors.nonceInput.val();
+    if (action === "wp_otp_auth_verify" || action === "wp_otp_auth_send") {
+      // For authentication actions, we need to create the auth nonce dynamically
+      // since it's not available in the form
+      nonceValue = wpOtpFrontend.authNonce || selectors.nonceInput.val();
+    }
+    
     $.ajax({
       url: wpOtpFrontend.ajaxUrl,
       method: "POST",
       dataType: "json",
       data: {
         action,
-        nonce: selectors.nonceInput.val(),
+        nonce: nonceValue,
         ...data,
       },
       success: function (response) {
@@ -101,7 +109,7 @@ jQuery(function ($) {
     }
 
     ajaxRequest({
-      action: "wp_otp_send_otp",
+      action: "wp_otp_auth_send",
       data: {
         channel: getSelectedChannel(),
         contact: contactVal,
@@ -127,15 +135,36 @@ jQuery(function ($) {
     console.log("CHANNEL:", getSelectedChannel());
 
     ajaxRequest({
-      action: "wp_otp_verify_otp",
+      action: "wp_otp_auth_verify",
       data: {
         contact: contactVal,
         otp: selectors.otpInput.val(),
         channel: getSelectedChannel(),
       },
       onSuccess: (response) => {
-        alert(response.data.message);
-        location.reload();
+        console.log('OTP verification response:', response);
+        
+        if (response.data && response.data.is_logged_in) {
+          console.log('User successfully logged in:', response.data.user_login);
+          
+          // Show success message
+          alert(response.data.message || 'Login successful!');
+          
+          // Redirect after successful verification
+          setTimeout(function() {
+            if (response.data.redirect_url) {
+              console.log('Redirecting to:', response.data.redirect_url);
+              window.location.href = response.data.redirect_url;
+            } else {
+              console.log('No redirect URL, reloading page');
+              window.location.reload();
+            }
+          }, 1500);
+        } else {
+          console.warn('User login may have failed:', response.data?.debug_info);
+          alert(response.data?.message || 'Login successful!');
+          location.reload();
+        }
       },
     });
   }

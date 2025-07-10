@@ -209,15 +209,30 @@
             },
             success: function(response) {
                 showLoading(false);
+                console.log('OTP verification response:', response);
                 
                 if (response.success) {
                     showSuccess(response.data.message, 'verify');
                     
+                    // Log debug information
+                    if (response.data.debug_info) {
+                        console.log('Debug info:', response.data.debug_info);
+                    }
+                    
+                    // Check if user is actually logged in
+                    if (response.data.is_logged_in) {
+                        console.log('User successfully logged in:', response.data.user_login);
+                    } else {
+                        console.warn('User login may have failed:', response.data.debug_info);
+                    }
+                    
                     // Redirect after successful verification
                     setTimeout(function() {
                         if (response.data.redirect_url) {
+                            console.log('Redirecting to:', response.data.redirect_url);
                             window.location.href = response.data.redirect_url;
                         } else {
+                            console.log('No redirect URL, reloading page');
                             window.location.reload();
                         }
                     }, 1500);
@@ -230,8 +245,9 @@
                     }
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 showLoading(false);
+                console.error('OTP verification error:', {xhr, status, error});
                 showError(wpOtpAuth.strings.error, 'otp');
             }
         });
